@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
-project(Voxel_Renderer VERSION 1.0) 
+project(SDL-template VERSION 1.0) 
 set(CMAKE_CXX_STANDARD 14)
 
 if ( ${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_BINARY_DIR} )
