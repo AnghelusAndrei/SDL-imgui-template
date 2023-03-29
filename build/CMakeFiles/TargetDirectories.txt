@@ -1,0 +1,3 @@
+C:/Users/Admin/Desktop/Voxel_Renderer/build/CMakeFiles/Voxel_Renderer.dir
+C:/Users/Admin/Desktop/Voxel_Renderer/build/CMakeFiles/edit_cache.dir
+C:/Users/Admin/Desktop/Voxel_Renderer/build/CMakeFiles/rebuild_cache.dir

@@ -1,0 +1,83 @@
+Performing C SOURCE FILE Test CMAKE_HAVE_LIBC_PTHREAD failed with the following output:
+Change Dir: C:/Users/Admin/Desktop/Voxel_Renderer/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/MinGW/bin/mingw32-make.exe -f Makefile cmTC_c0541/fast && C:/MinGW/bin/mingw32-make.exe  -f CMakeFiles\cmTC_c0541.dir\build.make CMakeFiles/cmTC_c0541.dir/build
+mingw32-make.exe[1]: Entering directory 'C:/Users/Admin/Desktop/Voxel_Renderer/build/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_c0541.dir/src.c.obj
+C:\MinGW\bin\gcc.exe -DCMAKE_HAVE_LIBC_PTHREAD   -o CMakeFiles\cmTC_c0541.dir\src.c.obj -c C:\Users\Admin\Desktop\Voxel_Renderer\build\CMakeFiles\CMakeTmp\src.c
+C:\Users\Admin\Desktop\Voxel_Renderer\build\CMakeFiles\CMakeTmp\src.c:1:21: fatal error: pthread.h: No such file or directory
+ #include <pthread.h>
+                     ^
+compilation terminated.
+CMakeFiles\cmTC_c0541.dir\build.make:76: recipe for target 'CMakeFiles/cmTC_c0541.dir/src.c.obj' failed
+mingw32-make.exe[1]: *** [CMakeFiles/cmTC_c0541.dir/src.c.obj] Error 1
+mingw32-make.exe[1]: Leaving directory 'C:/Users/Admin/Desktop/Voxel_Renderer/build/CMakeFiles/CMakeTmp'
+Makefile:126: recipe for target 'cmTC_c0541/fast' failed
+mingw32-make.exe: *** [cmTC_c0541/fast] Error 2
+
+
+Source file was:
+#include <pthread.h>
+
+static void* test_func(void* data)
+{
+  return data;
+}
+
+int main(void)
+{
+  pthread_t thread;
+  pthread_create(&thread, NULL, test_func, NULL);
+  pthread_detach(thread);
+  pthread_cancel(thread);
+  pthread_join(thread, NULL);
+  pthread_atfork(NULL, NULL, NULL);
+  pthread_exit(NULL);
+
+  return 0;
+}
+
+Determining if the function pthread_create exists in the pthreads failed with the following output:
+Change Dir: C:/Users/Admin/Desktop/Voxel_Renderer/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/MinGW/bin/mingw32-make.exe -f Makefile cmTC_922c7/fast && C:/MinGW/bin/mingw32-make.exe  -f CMakeFiles\cmTC_922c7.dir\build.make CMakeFiles/cmTC_922c7.dir/build
+mingw32-make.exe[1]: Entering directory 'C:/Users/Admin/Desktop/Voxel_Renderer/build/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_922c7.dir/CheckFunctionExists.c.obj
+C:\MinGW\bin\gcc.exe   -DCHECK_FUNCTION_EXISTS=pthread_create -o CMakeFiles\cmTC_922c7.dir\CheckFunctionExists.c.obj -c "C:\Program Files\CMake\share\cmake-3.24\Modules\CheckFunctionExists.c"
+Linking C executable cmTC_922c7.exe
+"C:\Program Files\CMake\bin\cmake.exe" -E cmake_link_script CMakeFiles\cmTC_922c7.dir\link.txt --verbose=1
+"C:\Program Files\CMake\bin\cmake.exe" -E rm -f CMakeFiles\cmTC_922c7.dir/objects.a
+C:\MinGW\bin\ar.exe qc CMakeFiles\cmTC_922c7.dir/objects.a @CMakeFiles\cmTC_922c7.dir\objects1.rsp
+C:\MinGW\bin\gcc.exe  -DCHECK_FUNCTION_EXISTS=pthread_create -Wl,--whole-archive CMakeFiles\cmTC_922c7.dir/objects.a -Wl,--no-whole-archive -o cmTC_922c7.exe -Wl,--out-implib,libcmTC_922c7.dll.a -Wl,--major-image-version,0,--minor-image-version,0 @CMakeFiles\cmTC_922c7.dir\linklibs.rsp
+c:/mingw/bin/../lib/gcc/mingw32/6.3.0/../../../../mingw32/bin/ld.exe: cannot find -lpthreads
+collect2.exe: error: ld returned 1 exit status
+CMakeFiles\cmTC_922c7.dir\build.make:99: recipe for target 'cmTC_922c7.exe' failed
+mingw32-make.exe[1]: *** [cmTC_922c7.exe] Error 1
+mingw32-make.exe[1]: Leaving directory 'C:/Users/Admin/Desktop/Voxel_Renderer/build/CMakeFiles/CMakeTmp'
+Makefile:126: recipe for target 'cmTC_922c7/fast' failed
+mingw32-make.exe: *** [cmTC_922c7/fast] Error 2
+
+
+
+Determining if the function pthread_create exists in the pthread failed with the following output:
+Change Dir: C:/Users/Admin/Desktop/Voxel_Renderer/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/MinGW/bin/mingw32-make.exe -f Makefile cmTC_687ca/fast && C:/MinGW/bin/mingw32-make.exe  -f CMakeFiles\cmTC_687ca.dir\build.make CMakeFiles/cmTC_687ca.dir/build
+mingw32-make.exe[1]: Entering directory 'C:/Users/Admin/Desktop/Voxel_Renderer/build/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_687ca.dir/CheckFunctionExists.c.obj
+C:\MinGW\bin\gcc.exe   -DCHECK_FUNCTION_EXISTS=pthread_create -o CMakeFiles\cmTC_687ca.dir\CheckFunctionExists.c.obj -c "C:\Program Files\CMake\share\cmake-3.24\Modules\CheckFunctionExists.c"
+Linking C executable cmTC_687ca.exe
+"C:\Program Files\CMake\bin\cmake.exe" -E cmake_link_script CMakeFiles\cmTC_687ca.dir\link.txt --verbose=1
+"C:\Program Files\CMake\bin\cmake.exe" -E rm -f CMakeFiles\cmTC_687ca.dir/objects.a
+C:\MinGW\bin\ar.exe qc CMakeFiles\cmTC_687ca.dir/objects.a @CMakeFiles\cmTC_687ca.dir\objects1.rsp
+C:\MinGW\bin\gcc.exe  -DCHECK_FUNCTION_EXISTS=pthread_create -Wl,--whole-archive CMakeFiles\cmTC_687ca.dir/objects.a -Wl,--no-whole-archive -o cmTC_687ca.exe -Wl,--out-implib,libcmTC_687ca.dll.a -Wl,--major-image-version,0,--minor-image-version,0 @CMakeFiles\cmTC_687ca.dir\linklibs.rsp
+c:/mingw/bin/../lib/gcc/mingw32/6.3.0/../../../../mingw32/bin/ld.exe: cannot find -lpthread
+collect2.exe: error: ld returned 1 exit status
+CMakeFiles\cmTC_687ca.dir\build.make:99: recipe for target 'cmTC_687ca.exe' failed
+mingw32-make.exe[1]: *** [cmTC_687ca.exe] Error 1
+mingw32-make.exe[1]: Leaving directory 'C:/Users/Admin/Desktop/Voxel_Renderer/build/CMakeFiles/CMakeTmp'
+Makefile:126: recipe for target 'cmTC_687ca/fast' failed
+mingw32-make.exe: *** [cmTC_687ca/fast] Error 2
+
+
+

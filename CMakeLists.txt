@@ -1,47 +1,93 @@
-cmake_minimum_required(VERSION 3.7)
+cmake_minimum_required(VERSION 3.10)
 project(Voxel_Renderer VERSION 1.0) 
+set(CMAKE_CXX_STANDARD 14)
 
-set(CXX_STANDARD 11)
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
-
-
-#set(CMAKE_BUILD_TYPE Debug)
 if ( ${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_BINARY_DIR} )
     message( FATAL_ERROR "In-source builds not allowed. Please make a new directory (called a build directory) and run CMake from there. You may need to remove CMakeCache.txt." )
 endif()
 
+# SETUP VARIABLES:
+set(CMAKE_INCLUDE_PATH ${PROJECT_SOURCE_DIR}/include)
+set(OUTPUT_DIR "${CMAKE_SOURCE_DIR}/bin/${CMAKE_BUILD_TYPE}")
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${OUTPUT_DIR}")
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${OUTPUT_DIR}")
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${OUTPUT_DIR}")
 
-add_executable(${PROJECT_NAME} src/main.cpp)
+# INCLUDE FILES THAT SHOULD BE COMPILED:
+
+file(GLOB_RECURSE SRC "src/*.cpp" "src/*.h")
+file(GLOB_RECURSE IMGUI "lib/imgui/*.cpp" "lib/imgui/*.h")
+
+message(STATUS "Add source files:")
+foreach(SRC_FILE IN LISTS SRC)
+    message(STATUS "${SRC_FILE}")
+endforeach()
+message(STATUS "")
+
+add_executable(${PROJECT_NAME} ${SRC} ${IMGUI})
 
 
 IF (WIN32)
-    #SDL
-    set(SDL2_LIBRARY CACHE PATH "C:\\Users\\megag\\Desktop\\SDL2-2.0.22\\lib\\x64\\SDL2.lib")
-    set(SDL2_INCLUDE_DIR CACHE PATH "C:\\Users\\megag\\Desktop\\SDL2-2.0.22\\include")
 
-    target_link_libraries(${PROJECT_NAME} "C:\\Users\\megag\\Desktop\\SDL2-2.0.22\\lib\\x64\\SDL2.lib")
-    target_link_libraries(${PROJECT_NAME} "C:\\Users\\megag\\Desktop\\Voxel_Renderer\\lib\\SDL2_ttf.dll")
-    target_include_directories(${PROJECT_NAME} PUBLIC SDL2_INCLUDE_DIR)
+    #include_directories(${SDL2_INCLUDE_DIR})
+    #target_link_libraries(${PROJECT_NAME} ${SDL2_LIBRARY})
+    #target_link_libraries(${PROJECT_NAME} mingw32 SDL2main SDL2)
 
-    #SDL_ttf
-    set(SDL2_TTF_LIBRARY CACHE PATH "C:\\Users\\megag\\Desktop\\SDL2_ttf-2.20.0\\lib\\x64\\SDL2_ttf.lib")
-    set(SDL2_TTF_INCLUDE_DIR CACHE PATH "C:\\Users\\megag\\Desktop\\SDL2_ttf-2.20.0\\include")
 
-    target_link_libraries(${PROJECT_NAME} "C:\\Users\\megag\\Desktop\\SDL2_ttf-2.20.0\\lib\\x64\\SDL2_ttf.lib")
-    target_link_libraries(${PROJECT_NAME} "C:\\Users\\megag\\Desktop\\SDL2_ttf-2.20.0\\lib\\x64\\SDL2_ttf.dll")
-    target_include_directories(${PROJECT_NAME} PUBLIC SDL2_TTF_INCLUDE_DIR)
-ELSE()
-    find_package(SDL_ttf REQUIRED)
+
+    # SETUP SDL2
+
+    set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
     find_package(SDL2 REQUIRED)
-    find_package(OpenCL REQUIRED)
+    if(NOT SDL2_FOUND)
+        message( FATAL_ERROR "The SDL2 devel package must be located in Program Files (x86)" )
 
-    include_directories(${SDL2_INCLUDE_DIRS} ${SDL_TTF_INCLUDE_DIRS} ${OpenCL_INCLUDE_DIRS})
-    target_link_libraries(${PROJECT_NAME} ${SDL2_LIBRARIES} ${SDL_TTF_LIBRARIES} ${OpenCL_LIBRARIES})
+        # NOTE: Folders here contain both SDL2 and SDL2_image files.
+        set(SDL2_LIB_DIR C:/SDL/lib)
+        set(SDL2_INCLUDE_DIR C:/SDL/include)
+        set(SDL2_LIBRARY C:/SDL/bin)
+    endif()
+
+    # SETUP INCLUDE AND LINK DIRS:
+
+    include_directories(${SDL2_INCLUDE_DIR})
+    target_link_libraries(${PROJECT_NAME} ${SDL2_LIBRARY})
+
+
+    # COPY OVER STATIC FILES
+
+    message(STATUS "Copying all dependencies to destination folder...")
+
+    foreach(lib ${SDL2_LIBRARY})
+        get_filename_component(FILE_EXT ${lib} EXT)
+        if(FILE_EXT STREQUAL ".dll")
+            list(APPEND PROJECT_DEPENDENCIES ${lib})
+        endif()
+    endforeach()
+    
+
+    foreach(Dependency IN LISTS PROJECT_DEPENDENCIES)
+        file(
+            COPY ${Dependency}
+            DESTINATION ${OUTPUT_DIR}
+        )
+    endforeach()
+ELSE()
+    find_package(SDL2 REQUIRED)
+
+    include_directories(${SDL2_INCLUDE_DIRS})
+    target_link_libraries(${PROJECT_NAME} ${SDL2_LIBRARIES})
 ENDIF()
 
+
+message(STATUS "Copying all assets to destination folder...")
+file(
+    COPY assets
+    DESTINATION ${OUTPUT_DIR}
+)
 
 
 target_include_directories(${PROJECT_NAME} PUBLIC lib/PerlinNoise)
 
-file(GLOB_RECURSE shaders "*.cl" "*.hcl")
-file(COPY ${shaders} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/shd)
+# cmake -G "MinGW Makefiles" .. 
+# cmake --build .
