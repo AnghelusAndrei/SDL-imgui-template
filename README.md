@@ -1,6 +1,8 @@
 # SDL-template
 ## Flexible SDL-imgui template
 
+![alt text](https://github.com/AnghelusAndrei/SDL-imgui-template/tree/main/README.png)
+
 ### requires:
 * SDL2 devel pack
 

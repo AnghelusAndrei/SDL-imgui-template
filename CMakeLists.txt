@@ -29,12 +29,6 @@ add_executable(${PROJECT_NAME} ${SRC} ${IMGUI})
 
 IF (WIN32)
 
-    #include_directories(${SDL2_INCLUDE_DIR})
-    #target_link_libraries(${PROJECT_NAME} ${SDL2_LIBRARY})
-    #target_link_libraries(${PROJECT_NAME} mingw32 SDL2main SDL2)
-
-
-
     # SETUP SDL2
 
     set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
@@ -89,5 +83,3 @@ file(
 
 target_include_directories(${PROJECT_NAME} PUBLIC lib/PerlinNoise)
 
-# cmake -G "MinGW Makefiles" .. 
-# cmake --build .
