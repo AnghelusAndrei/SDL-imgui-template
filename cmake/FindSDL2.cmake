@@ -76,6 +76,7 @@ SET(SDL2_SEARCH_PATHS
 	/opt/csw # Blastwave
 	/opt
 	${SDL2_PATH}
+	"C:/Program Files (x86)/SDL2"
     "C:/Program Files (x86)"
     "C:/Program Files"
     "C:"
