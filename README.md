@@ -7,12 +7,13 @@
 * SDL2 devel pack
 
 ### Setup
-SDL2 devel pack must be downloaded somewhere on your machine(its best to put it in Program Files (x86) for Windows)
+SDL2 devel pack must be downloaded somewhere on your machine(its best to put it in Program Files (x86) for Windows (if it still does not work rename it to SDL2))
+
 
 clone the git:
 ```
 git clone --recursive https://github.com/AnghelusAndrei/SDL-imgui-template.git
-cd SDL-template
+cd SDL-imgui-template
 git submodule update --init --recursive
 ```
 
@@ -33,3 +34,5 @@ cd build
 cmake .. 
 cmake --build .
 ```
+
+afer building and compiling the project, you cand find the executable in bin
