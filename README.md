@@ -14,7 +14,8 @@ SDL2_image devel pack must be downloaded somewhere on your machine(its best to p
 clone the git:
 ```
 git clone --recursive https://github.com/AnghelusAndrei/SDL-imgui-template.git
-cd SDL-template
+cd SDL-imgui-template
+git checkout SDL_image
 git submodule update --init --recursive
 ```
 
@@ -35,3 +36,5 @@ cd build
 cmake .. 
 cmake --build .
 ```
+
+afer building and compiling the project, you cand find the executable in bin
