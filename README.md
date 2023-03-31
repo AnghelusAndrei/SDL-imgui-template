@@ -5,9 +5,11 @@
 
 ### requires:
 * SDL2 devel pack
+* SDL2_image devel pack
 
 ### Setup
-SDL2 devel pack must be downloaded somewhere on your machine(its best to put it in Program Files (x86) for Windows)
+SDL2 devel pack must be downloaded somewhere on your machine(its best to put it in Program Files (x86) for Windows (if it still does not work rename it to SDL2))
+SDL2_image devel pack must be downloaded somewhere on your machine(its best to put it in Program Files (x86) for Windows (if it still does not work rename it to SDL2_image))
 
 clone the git:
 ```
