@@ -16,7 +16,6 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${OUTPUT_DIR}")
 # INCLUDE FILES THAT SHOULD BE COMPILED:
 
 file(GLOB_RECURSE SRC "src/*.cpp" "src/*.h")
-file(GLOB_RECURSE IMGUI "lib/imgui/*.cpp" "lib/imgui/*.h")
 
 message(STATUS "Add source files:")
 foreach(SRC_FILE IN LISTS SRC)
@@ -24,7 +23,7 @@ foreach(SRC_FILE IN LISTS SRC)
 endforeach()
 message(STATUS "")
 
-add_executable(${PROJECT_NAME} ${SRC} ${IMGUI})
+add_executable(${PROJECT_NAME} ${SRC})
 
 
 IF (WIN32)
@@ -34,12 +33,12 @@ IF (WIN32)
     set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
     find_package(SDL2 REQUIRED)
     if(NOT SDL2_FOUND)
-        message( FATAL_ERROR "The SDL2 devel package must be located in Program Files (x86)" )
+        message( FATAL_ERROR "The SDL2 devel package must renamed to SDL2 and located in Program Files (x86)" )
 
         # NOTE: Folders here contain both SDL2 and SDL2_image files.
-        set(SDL2_LIB_DIR C:/SDL/lib)
-        set(SDL2_INCLUDE_DIR C:/SDL/include)
-        set(SDL2_LIBRARY C:/SDL/bin)
+        set(SDL2_LIB_DIR "C:/Program Files (x86)/SDL2/lib")
+        set(SDL2_INCLUDE_DIR "C:/Program Files (x86)/SDL2/include")
+        set(SDL2_LIBRARY "C:/Program Files (x86)/SDL2/lib/x86/SDL2.lib" "C:/Program Files (x86)/SDL2/lib/x86/SDL2.dll" "C:/Program Files (x86)/SDL2/lib/x86/SDL2_main.lib")
     endif()
 
     # SETUP INCLUDE AND LINK DIRS:
