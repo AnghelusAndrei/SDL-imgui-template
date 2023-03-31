@@ -5,8 +5,7 @@
 #include "imgui/internal/imgui_impl_sdl2.h"
 #include "imgui/internal/imgui_impl_sdlrenderer.h"
 #include <stdio.h>
-#include <SDL.h>
-#include <SDL_image.h>
+#include "engine.h"
 
 #if !SDL_VERSION_ATLEAST(2,0,17)
 #error This backend requires SDL 2.0.17+ because of SDL_RenderGeometry() function
@@ -76,6 +75,34 @@ int main(int, char**)
     bool show_another_window = false;
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 
+
+    float FOV = 90;
+    float Zfar = 1000;
+    float Znear = 0.1;
+    mat4x4 Projection_Matrix = Matrix_Projection(1280, 720, FOV, Zfar, Znear);
+    float *pDepthBuffer = new float[1280 * 720];
+
+    mesh Cube;
+    Cube.LoadFile("./assets/sphere.obj", false);
+
+    player_t Camera = {0,0,0,0,0};
+
+    vec3 light;
+    light.x = -1;
+    light.y = -0.75;
+    light.z = -0.5;
+
+    Cube.position.x = 0;
+    Cube.position.y = 0;
+    Cube.position.z = 5;
+
+    Cube.size.x = 1;
+    Cube.size.y = 1;
+    Cube.size.z = 1;
+
+    Cube.color = {255, 100, 50};
+
+
     // Main loop
     bool done = false;
     while (!done)
@@ -142,6 +169,17 @@ int main(int, char**)
         SDL_RenderSetScale(renderer, io.DisplayFramebufferScale.x, io.DisplayFramebufferScale.y);
         SDL_SetRenderDrawColor(renderer, (Uint8)(clear_color.x * 255), (Uint8)(clear_color.y * 255), (Uint8)(clear_color.z * 255), (Uint8)(clear_color.w * 255));
         SDL_RenderClear(renderer);
+
+        Cube.rotation.x = (float)(SDL_GetTicks()/50);
+        Cube.rotation.y = (float)(SDL_GetTicks()/50);
+        Cube.rotation.z = (float)(SDL_GetTicks()/50);
+
+        Cube.position.z = ((Cube.position.z-0.02f)<(Camera.z+1)) ? 5 : (Cube.position.z-0.02f);
+
+        std::vector<mesh> mesh_collection;
+        mesh_collection.push_back(Cube);
+        Frame(renderer, mesh_collection, Projection_Matrix, Camera, pDepthBuffer, light, 1280, 720);
+
         ImGui_ImplSDLRenderer_RenderDrawData(ImGui::GetDrawData());
         SDL_RenderPresent(renderer);
     }
