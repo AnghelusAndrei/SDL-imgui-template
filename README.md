@@ -64,4 +64,4 @@ cmake ..
 cmake --build .
 ```
 
-##You can find the exeecutable in either of the bin directories##
+## You can find the exeecutable in either of the bin directories
