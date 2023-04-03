@@ -2,8 +2,11 @@
 #include "app.hpp"
 
 int main(){
-    Server server = Server(2000);
-    App app = App();
+    Client *client = new Client(2000, (char*)std::string("192.168.1.6").c_str());
+    App *app = new App(client);
 
-    while(app.Frame(server.Run())){}
+    while(app->Frame()){}
+
+    delete app;
+    delete client;
 }

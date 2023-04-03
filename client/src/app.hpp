@@ -5,16 +5,18 @@
 #include "imgui/internal/imgui_impl_sdl2.h"
 #include "imgui/internal/imgui_impl_sdlrenderer.h"
 #include "SDL.h"
-#include "server.hpp"
+#include "client.hpp"
 
 
 class App{
     public:
-    App();
+    App(Client *client_);
     ~App();
-    bool Frame(data *server);
+    bool Frame();
 
     private:
+    Client *client;
+
     SDL_Window *window;
     SDL_Renderer *renderer;
     ImGuiIO io;

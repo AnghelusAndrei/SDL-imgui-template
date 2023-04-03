@@ -5,21 +5,19 @@
 #include "SDL_net.h"
 #include "data.hpp"
 
-class Server{
+class Client{
     public:
-        Server(const uint16_t &port);
-        ~Server();
-        data *Run();
+        Client(uint16_t port, char *ip);
+        ~Client();
+        recieved *Recieve();
+        void Send(sent *data);
 
-        uint32_t time = 0;
+        IPaddress server_address;
 
     private:
-        void CloseSocket(int index);
-        int AcceptSocket(int index);
         uint64_t Hash_Address(uint32_t host, uint16_t port);
-        TCPsocket server;
-        SDLNet_SocketSet socket_set;
-        std::unordered_map<uint64_t, TCPsocket> sockets;
+        TCPsocket socket;
 
-        data *ServerData;
+        recieved *ServerData;
+        sent *ClientData;
 };

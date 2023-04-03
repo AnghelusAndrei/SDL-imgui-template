@@ -1,7 +1,7 @@
 #include "app.hpp"
 #include "SDL_net.h"
 
-App::App(){
+App::App(Client *client_) : client(client_){
     // Setup SDL
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_GAMECONTROLLER) != 0)
     {
@@ -53,7 +53,7 @@ ImVec2 App::GetWindowSize(){
     return ImVec2(size.first, size.second);
 }
 
-bool App::Frame(data *server){
+bool App::Frame(){
     SDL_Event event;
     while (SDL_PollEvent(&event))
     {
@@ -66,6 +66,8 @@ bool App::Frame(data *server){
             return 0;
     }
 
+    recieved *server = client->Recieve();
+
     // Start the Dear ImGui frame
     ImGui_ImplSDLRenderer_NewFrame();
     ImGui_ImplSDL2_NewFrame();
@@ -76,7 +78,7 @@ bool App::Frame(data *server){
         ImGui::SetNextWindowPos(ImVec2(0,0));
         ImGui::SetNextWindowSize(window_size);
 
-        ImGui::Begin("Server");  
+        ImGui::Begin("Client");  
 
         ImGui::Spacing();
 
@@ -96,20 +98,8 @@ bool App::Frame(data *server){
 
         uint8_t parts[4] = {0};
         for (int i=0; i<4 ;++i)
-            parts[i] = ((uint8_t*)&server->ip.host)[3-i];
-        ImGui::Text("The server is ran on port %i and local ip %i.%i.%i.%i", server->port, (int)parts[3], (int)parts[2], (int)parts[1], (int)parts[0]); 
-        ImGui::Text("connected clients: %i", server->clients.size());
-        ImGui::Text("ready sockets: %i", server->num_ready);
-
-        ImGui::SeparatorText("Clients");
-
-        ImGui::BeginChild("clients", ImVec2(0, 0), true);
-        for (auto client : server->clients){
-            for (int i=0; i<4 ;++i)
-                parts[i] = ((uint8_t*)&client.second.host)[3-i];
-            ImGui::BulletText("Client id: host: %i.%i.%i.%i, port: %i. properites: in use: %i", (int)parts[3], (int)parts[2], (int)parts[1], (int)parts[0], client.second.port, client.second.in_use);
-        }
-        ImGui::EndChild();
+            parts[i] = ((uint8_t*)&client->server_address.host)[3-i];
+        ImGui::Text("Pinging server on port %i and local ip %i.%i.%i.%i", client->server_address.port, (int)parts[3], (int)parts[2], (int)parts[1], (int)parts[0]); 
         
 
         ImGui::End();
