@@ -67,14 +67,18 @@ bool Window::Frame(data server){
     {
         ImGui::Begin("Server");  
 
+        ImGui::Text("error: "); ImGui::SameLine(); 
         if(server.stopped){
-            ImGui::Text("error: "); ImGui::SameLine(); ImGui::Text(server.error);
+            ImGui::Text(server.error);
+        }else{
+            ImGui::Text("None");
         }
 
         ImGui::Text("The server is ran on port 2000"); 
-        ImGui::Text("host = %i, port = %i", server.host, server.port);  
+        ImGui::Text("connected clients: %i", server.num_ready);
+        ImGui::Text("next index: %i", server.next_ind);
 
-        ImGui::ColorEdit3("clear color", (float*)&clear_color);
+        //ImGui::ColorEdit3("clear color", (float*)&clear_color);
 
         ImGui::End();
     }

@@ -1,0 +1,3 @@
+C:/Users/Admin/Desktop/SDL-imgui-template/server/build/CMakeFiles/SDL-template.dir
+C:/Users/Admin/Desktop/SDL-imgui-template/server/build/CMakeFiles/edit_cache.dir
+C:/Users/Admin/Desktop/SDL-imgui-template/server/build/CMakeFiles/rebuild_cache.dir

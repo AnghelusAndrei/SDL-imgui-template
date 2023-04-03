@@ -6,11 +6,17 @@
 
 class Server{
     public:
-    Server();
-    ~Server();
-    data Run();
+        Server();
+        ~Server();
+        data Run();
+
+        uint32_t time = 0;
     private:
-        TCPsocket sd, csd;
-        IPaddress ip, *remoteIP; 
+        void CloseSocket(int index);
+        int AcceptSocket(int index);
+        TCPsocket server;
+        SDLNet_SocketSet socket_set;
+        TCPsocket sockets[MAX_SOCKETS] = {};
+        IPaddress ip; 
         data ServerData;
 };
