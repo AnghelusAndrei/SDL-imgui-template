@@ -8,11 +8,11 @@
 #include "server.hpp"
 
 
-class Window{
+class App{
     public:
-    Window();
-    ~Window();
-    bool Frame(data server);
+    App();
+    ~App();
+    bool Frame(data *server);
 
     private:
     SDL_Window *window;
@@ -22,4 +22,6 @@ class Window{
     bool show_demo_window = true;
     bool show_another_window = false;
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+
+    ImVec2 GetWindowSize();
 };

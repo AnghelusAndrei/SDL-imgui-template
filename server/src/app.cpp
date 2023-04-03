@@ -1,6 +1,7 @@
-#include "window.hpp"
+#include "app.hpp"
+#include "SDL_net.h"
 
-Window::Window(){
+App::App(){
     // Setup SDL
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_GAMECONTROLLER) != 0)
     {
@@ -14,7 +15,7 @@ Window::Window(){
 
     // Create window with SDL_Renderer graphics context
     SDL_WindowFlags window_flags = (SDL_WindowFlags)(SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
-    window = SDL_CreateWindow("Dear ImGui SDL2+SDL_Renderer example", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1280, 720, window_flags);
+    window = SDL_CreateWindow("Dear ImGui SDL2+SDL_Renderer example", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 800, 600, window_flags);
     renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_PRESENTVSYNC | SDL_RENDERER_ACCELERATED);
     if (renderer == NULL)
     {
@@ -36,7 +37,7 @@ Window::Window(){
     ImGui_ImplSDLRenderer_Init(renderer);
 }
 
-Window::~Window(){
+App::~App(){
     ImGui_ImplSDLRenderer_Shutdown();
     ImGui_ImplSDL2_Shutdown();
     ImGui::DestroyContext();
@@ -46,7 +47,13 @@ Window::~Window(){
     SDL_Quit();
 }
 
-bool Window::Frame(data server){
+ImVec2 App::GetWindowSize(){
+    std::pair<int, int> size;
+    SDL_GetWindowSize(window, &size.first, &size.second);
+    return ImVec2(size.first, size.second);
+}
+
+bool App::Frame(data *server){
     SDL_Event event;
     while (SDL_PollEvent(&event))
     {
@@ -65,20 +72,45 @@ bool Window::Frame(data server){
     ImGui::NewFrame();
 
     {
+        ImVec2 window_size = GetWindowSize();
+        ImGui::SetNextWindowPos(ImVec2(0,0));
+        ImGui::SetNextWindowSize(window_size);
+
         ImGui::Begin("Server");  
 
-        ImGui::Text("error: "); ImGui::SameLine(); 
-        if(server.stopped){
-            ImGui::Text(server.error);
+        ImGui::Spacing();
+
+        if(!server->debug_error){
+            ImGui::Text("debug:"); ImGui::SameLine(); 
+            if(server->debug_init){
+                ImGui::Text(server->debug);
+            }else{
+                ImGui::Text("None");
+            }
         }else{
-            ImGui::Text("None");
+            ImGui::Text("error:"); ImGui::SameLine(); ImGui::Text(server->debug);
         }
 
-        ImGui::Text("The server is ran on port 2000"); 
-        ImGui::Text("connected clients: %i", server.num_ready);
-        ImGui::Text("next index: %i", server.next_ind);
 
-        //ImGui::ColorEdit3("clear color", (float*)&clear_color);
+        ImGui::SeparatorText("Server data");
+
+        uint8_t parts[4] = {0};
+        for (int i=0; i<4 ;++i)
+            parts[i] = ((uint8_t*)&server->ip.host)[3-i];
+        ImGui::Text("The server is ran on port %i and local ip %i.%i.%i.%i", server->port, (int)parts[3], (int)parts[2], (int)parts[1], (int)parts[0]); 
+        ImGui::Text("connected clients: %i", server->clients.size());
+        ImGui::Text("ready sockets: %i", server->num_ready);
+
+        ImGui::SeparatorText("Clients");
+
+        ImGui::BeginChild("clients", ImVec2(0, 0), true);
+        for (auto client : server->clients){
+            for (int i=0; i<4 ;++i)
+                parts[i] = ((uint8_t*)&client.second.host)[3-i];
+            ImGui::BulletText("Client id: host: %i.%i.%i.%i, port: %i. properites: in use: %i", (int)parts[3], (int)parts[2], (int)parts[1], (int)parts[0], client.second.port, client.second.in_use);
+        }
+        ImGui::EndChild();
+        
 
         ImGui::End();
     }

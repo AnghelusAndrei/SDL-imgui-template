@@ -1,17 +1,23 @@
 #include <bits/stdc++.h>
-#define MAX_SOCKETS 10
-#define SERVER_DELAY 10
+#define MAX_SOCKETS 30
+#define SERVER_DELAY 300
+#define BUFFER_SIZE 512
 
 typedef struct {
-    int in_use;
-    int questing;
+    uint8_t in_use;
+    uint16_t port;
+    uint32_t host;
 } Client;
 
 struct data{
-    bool quit = false;
-    bool stopped = false;
-    int num_ready = 0;
-    int next_ind = 0;
-    char *error;
-    Client clients[MAX_SOCKETS];
+    //data that needs to be passed to the window 
+    char *debug;
+    bool debug_init = false;
+    bool debug_error = false;
+
+    //server data
+    IPaddress ip; 
+    uint16_t port = 2000;
+    uint16_t num_ready = 0;
+    std::unordered_map<uint64_t, Client> clients;
 };

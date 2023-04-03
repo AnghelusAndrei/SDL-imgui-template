@@ -1,9 +1,9 @@
 #define SDL_MAIN_HANDLED
-#include "window.hpp"
+#include "app.hpp"
 
 int main(){
-    Server server = Server();
-    Window window = Window();
+    Server server = Server(2000);
+    App app = App();
 
-    while(window.Frame(server.Run())){}
+    while(app.Frame(server.Run())){}
 }
