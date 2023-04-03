@@ -1,3 +1,0 @@
-"C:\Program Files\CMake\bin\cmake.exe" -E rm -f CMakeFiles\SDL-template.dir/objects.a
-C:\MinGW\bin\ar.exe qc CMakeFiles\SDL-template.dir/objects.a @CMakeFiles\SDL-template.dir\objects1.rsp
-C:\MinGW\bin\c++.exe -g -Wl,--whole-archive CMakeFiles\SDL-template.dir/objects.a -Wl,--no-whole-archive -o C:\Users\Admin\Desktop\SDL-imgui-template\server\bin\Debug\SDL-template.exe -Wl,--out-implib,C:\Users\Admin\Desktop\SDL-imgui-template\server\bin\Debug\libSDL-template.dll.a -Wl,--major-image-version,0,--minor-image-version,0 @CMakeFiles\SDL-template.dir\linklibs.rsp
