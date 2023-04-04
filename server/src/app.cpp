@@ -35,6 +35,9 @@ App::App(){
     // Setup Platform/Renderer backends
     ImGui_ImplSDL2_InitForSDLRenderer(window, renderer);
     ImGui_ImplSDLRenderer_Init(renderer);
+
+
+    server = new Server(2000);
 }
 
 App::~App(){
@@ -53,7 +56,7 @@ ImVec2 App::GetWindowSize(){
     return ImVec2(size.first, size.second);
 }
 
-bool App::Frame(data *server){
+bool App::Frame(){
     SDL_Event event;
     while (SDL_PollEvent(&event))
     {
@@ -71,6 +74,7 @@ bool App::Frame(data *server){
     ImGui_ImplSDL2_NewFrame();
     ImGui::NewFrame();
 
+    server->Run();
     {
         ImVec2 window_size = GetWindowSize();
         ImGui::SetNextWindowPos(ImVec2(0,0));
@@ -98,16 +102,18 @@ bool App::Frame(data *server){
         for (int i=0; i<4 ;++i)
             parts[i] = ((uint8_t*)&server->ip.host)[3-i];
         ImGui::Text("The server is ran on port %i and local ip %i.%i.%i.%i", server->port, (int)parts[3], (int)parts[2], (int)parts[1], (int)parts[0]); 
-        ImGui::Text("connected clients: %i", server->clients.size());
+        ImGui::Text("connected clients: %i", server->ServerData->clients.size());
         ImGui::Text("ready sockets: %i", server->num_ready);
 
         ImGui::SeparatorText("Clients");
 
         ImGui::BeginChild("clients", ImVec2(0, 0), true);
-        for (auto client : server->clients){
+        for (auto client : server->ServerData->clients){
             for (int i=0; i<4 ;++i)
                 parts[i] = ((uint8_t*)&client.second.host)[3-i];
-            ImGui::BulletText("Client id: host: %i.%i.%i.%i, port: %i. properites: in use: %i", (int)parts[3], (int)parts[2], (int)parts[1], (int)parts[0], client.second.port, client.second.in_use);
+            ImGui::BulletText("Client id: host: %i.%i.%i.%i, port: %i. properites: name:", (int)parts[3], (int)parts[2], (int)parts[1], (int)parts[0], client.second.port);
+            ImGui::SameLine();
+            ImGui::Text(client.second.name);
         }
         ImGui::EndChild();
         

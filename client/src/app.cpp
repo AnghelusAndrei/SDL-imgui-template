@@ -82,15 +82,15 @@ bool App::Frame(){
 
         ImGui::Spacing();
 
-        if(!server->debug_error){
+        if(!client->debug_error){
             ImGui::Text("debug:"); ImGui::SameLine(); 
-            if(server->debug_init){
-                ImGui::Text(server->debug);
+            if(client->debug_init){
+                ImGui::Text(client->debug);
             }else{
                 ImGui::Text("None");
             }
         }else{
-            ImGui::Text("error:"); ImGui::SameLine(); ImGui::Text(server->debug);
+            ImGui::Text("error:"); ImGui::SameLine(); ImGui::Text(client->debug);
         }
 
 
@@ -101,6 +101,23 @@ bool App::Frame(){
             parts[i] = ((uint8_t*)&client->server_address.host)[3-i];
         ImGui::Text("Pinging server on port %i and local ip %i.%i.%i.%i", client->server_address.port, (int)parts[3], (int)parts[2], (int)parts[1], (int)parts[0]); 
         
+        ImGui::BeginChild("app", ImVec2(0, 0), true);
+        ImGui::Text("Input name here:");
+        ImGui::SameLine();
+        ImGui::InputText(client->ClientData->name, input, IM_ARRAYSIZE(input));
+        ImGui::SameLine();
+        if(ImGui::Button("Submit", ImVec2(0,0)) && std::strlen(input) > 0){
+            std::strcpy(client->ClientData->name, input);
+            client->Send(client->ClientData);
+        }
+
+        ImGui::BeginChild("clients", ImVec2(0, 0), true);
+        ImGui::Text("users connected: %i", client->ServerData->users);
+        ImGui::Text("Raw server buffer:");
+        ImGui::SameLine();
+        ImGui::Text(client->ServerData->buffer);
+        ImGui::EndChild();
+        ImGui::EndChild();
 
         ImGui::End();
     }

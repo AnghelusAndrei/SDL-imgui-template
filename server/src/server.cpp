@@ -1,49 +1,49 @@
 #include "server.hpp"
 #include "SDL_net.h"
 
-Server::Server(const uint16_t &port){
+Server::Server(const uint16_t &port_) : port(port_){
     ServerData = new data();
 
     if (SDLNet_Init() < 0) { 
-        ServerData->debug = (char*)SDLNet_GetError();
-        ServerData->debug_init = true;
-        ServerData->debug_error = true;
+        debug = (char*)SDLNet_GetError();
+        debug_init = true;
+        debug_error = true;
     }
 
-    if(SDLNet_ResolveHost(&ServerData->ip, NULL, ServerData->port) < 0) { 
-        ServerData->debug = (char*)SDLNet_GetError();
-        ServerData->debug_init = true;
-        ServerData->debug_error = true;
+    if(SDLNet_ResolveHost(&ip, NULL, port) < 0) { 
+        debug = (char*)SDLNet_GetError();
+        debug_init = true;
+        debug_error = true;
     }
 
 
-    server = SDLNet_TCP_Open(&ServerData->ip);
+    server = SDLNet_TCP_Open(&ip);
     if (!server)
     {
-        ServerData->debug = (char*)SDLNet_GetError();
-        ServerData->debug_init = true;
-        ServerData->debug_error = true;
+        debug = (char*)SDLNet_GetError();
+        debug_init = true;
+        debug_error = true;
     }
 
     socket_set = SDLNet_AllocSocketSet(MAX_SOCKETS+1);
     if(socket_set == NULL) {
-        ServerData->debug = (char*)SDLNet_GetError();
-        ServerData->debug_init = true;
-        ServerData->debug_error = true;
+        debug = (char*)SDLNet_GetError();
+        debug_init = true;
+        debug_error = true;
     }
     
     if(SDLNet_TCP_AddSocket(socket_set, server) == -1) {
-        ServerData->debug = (char*)SDLNet_GetError();
-        ServerData->debug_init = true;
-        ServerData->debug_error = true;
+        debug = (char*)SDLNet_GetError();
+        debug_init = true;
+        debug_error = true;
     }
 }
 
 Server::~Server(){
     if(SDLNet_TCP_DelSocket(socket_set, server) == -1) {
-        ServerData->debug = (char*)SDLNet_GetError();
-        ServerData->debug_init = true;
-        ServerData->debug_error = true;
+        debug = (char*)SDLNet_GetError();
+        debug_init = true;
+        debug_error = true;
     } SDLNet_TCP_Close(server);
     
     for (auto e : sockets) {
@@ -77,8 +77,8 @@ data *Server::Run(){
 
     time = SDL_GetTicks();
 
-    ServerData->num_ready = SDLNet_CheckSockets(socket_set, 0);
-    if(ServerData->num_ready <= 0) {
+    num_ready = SDLNet_CheckSockets(socket_set, 0);
+    if(num_ready <= 0) {
         // NOTE: none of the sockets are ready
         return ServerData;
     }
@@ -86,8 +86,8 @@ data *Server::Run(){
     //check for a new client connection
     if(SDLNet_SocketReady(server)) {
         if(sockets.size() > MAX_SOCKETS){
-            ServerData->debug = (char*)std::string("Server full").c_str();
-            ServerData->debug_init = true;
+            debug = (char*)std::string("Server full").c_str();
+            debug_init = true;
         }else{
             TCPsocket client_socket = SDLNet_TCP_Accept(server);
 
@@ -99,16 +99,16 @@ data *Server::Run(){
 
                 // Add the client socket to the socket set
                 if (SDLNet_TCP_AddSocket(socket_set, sockets[id]) == -1) {
-                    ServerData->debug = (char*)SDLNet_GetError();
-                    ServerData->debug_init = true;
-                    ServerData->debug_error = true;
+                    debug = (char*)SDLNet_GetError();
+                    debug_init = true;
+                    debug_error = true;
                     SDLNet_TCP_Close(sockets[id]);
                 } else {
-                    ServerData->debug = (char*)std::string("New client connected").c_str();
-                    ServerData->debug_init = true;
+                    debug = (char*)std::string("New client connected").c_str();
+                    debug_init = true;
                     
                     Client client;
-                    client.in_use = 1;
+                    std::strcpy(client.name, (char*)std::string("unnamed").c_str());
                     client.host = address->host;
                     client.port = address->port;
                     ServerData->clients.insert(std::make_pair(id, client));
@@ -122,18 +122,37 @@ data *Server::Run(){
         TCPsocket client_socket = e.second;
         if (SDLNet_SocketReady( client_socket)) {
             char buffer[BUFFER_SIZE];
-            int bytesReceived = SDLNet_TCP_Recv( client_socket, buffer, BUFFER_SIZE - 1);
+            int bytesReceived = SDLNet_TCP_Recv( client_socket, buffer, BUFFER_SIZE);
             if (bytesReceived <= 0) {
                 // Client disconnected
-                ServerData->debug = (char*)std::string("client disconnected").c_str();
-                ServerData->debug_init = true;
+                debug = (char*)std::string("client disconnected").c_str();
+                debug_init = true;
                 SDLNet_TCP_DelSocket(socket_set,  client_socket);
                 SDLNet_TCP_Close(client_socket);
                 sockets.erase(e.first);
 
                 ServerData->clients.erase(e.first);
                 break;
+            }else if(bytesReceived == BUFFER_SIZE){
+                std::strcpy(ServerData->clients[e.first].name, buffer);
             }
+
+        }
+    }
+
+
+    // Send data to all connected users
+    char raw_send_data[BUFFER_SIZE];
+    uint8_t num_users = (uint8_t)(ServerData->clients.size());
+    raw_send_data[0] = num_users;
+
+    for (auto e : sockets) {
+        TCPsocket client_socket = e.second;
+        
+        if (SDLNet_TCP_Send(client_socket, (void *)raw_send_data, BUFFER_SIZE) < BUFFER_SIZE) {
+            debug = (char*)SDLNet_GetError();
+            debug_init = true;
+            debug_error = true;
         }
     }
     

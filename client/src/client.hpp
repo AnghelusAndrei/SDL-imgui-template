@@ -18,6 +18,13 @@ class Client{
         uint64_t Hash_Address(uint32_t host, uint16_t port);
         TCPsocket socket;
 
+        //data that needs to be passed to the window 
+        char *debug;
+        bool debug_init = false;
+        bool debug_error = false;
+
         recieved *ServerData;
         sent *ClientData;
+
+    friend class App;
 };

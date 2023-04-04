@@ -12,12 +12,14 @@ class App{
     public:
     App();
     ~App();
-    bool Frame(data *server);
+    bool Frame();
 
     private:
     SDL_Window *window;
     SDL_Renderer *renderer;
     ImGuiIO io;
+
+    Server *server;
 
     bool show_demo_window = true;
     bool show_another_window = false;
