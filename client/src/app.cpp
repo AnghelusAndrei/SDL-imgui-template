@@ -112,10 +112,10 @@ bool App::Frame(){
         }
 
         ImGui::BeginChild("clients", ImVec2(0, 0), true);
-        ImGui::Text("users connected: %i", client->ServerData->users);
+        ImGui::Text("users connected: %i", server->users);
         ImGui::Text("Raw server buffer:");
         ImGui::SameLine();
-        ImGui::Text(client->ServerData->buffer);
+        ImGui::Text(server->buffer);
         ImGui::EndChild();
         ImGui::EndChild();
 

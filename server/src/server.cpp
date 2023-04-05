@@ -142,14 +142,12 @@ data *Server::Run(){
 
 
     // Send data to all connected users
-    char raw_send_data[BUFFER_SIZE];
+    char raw_send_data[BUFFER_SIZE] = "";
     uint8_t num_users = (uint8_t)(ServerData->clients.size());
-    raw_send_data[0] = num_users;
+    raw_send_data[0] = (char)num_users;
 
     for (auto e : sockets) {
-        TCPsocket client_socket = e.second;
-        
-        if (SDLNet_TCP_Send(client_socket, (void *)raw_send_data, BUFFER_SIZE) < BUFFER_SIZE) {
+        if (SDLNet_TCP_Send(e.second, (void *)raw_send_data, BUFFER_SIZE) < BUFFER_SIZE) {
             debug = (char*)SDLNet_GetError();
             debug_init = true;
             debug_error = true;
