@@ -80,6 +80,20 @@ data *Server::Run(){
     num_ready = SDLNet_CheckSockets(socket_set, 0);
     if(num_ready <= 0) {
         // NOTE: none of the sockets are ready
+
+        // Send data to all connected users
+        char raw_send_data[BUFFER_SIZE] = "";
+        uint8_t num_users = (uint8_t)(ServerData->clients.size());
+        raw_send_data[0] = (char)num_users;
+        raw_send_data[1] = (char)(SDL_GetTicks()%256);
+
+        for (auto e : sockets) {
+            if (SDLNet_TCP_Send(e.second, (void *)raw_send_data, BUFFER_SIZE) < BUFFER_SIZE) {
+                debug = (char*)SDLNet_GetError();
+                debug_init = true;
+                debug_error = true;
+            }
+        }
         return ServerData;
     }
 
@@ -132,25 +146,11 @@ data *Server::Run(){
                 sockets.erase(e.first);
 
                 ServerData->clients.erase(e.first);
-                break;
+                continue;
             }else if(bytesReceived == BUFFER_SIZE){
                 std::strcpy(ServerData->clients[e.first].name, buffer);
             }
 
-        }
-    }
-
-
-    // Send data to all connected users
-    char raw_send_data[BUFFER_SIZE] = "";
-    uint8_t num_users = (uint8_t)(ServerData->clients.size());
-    raw_send_data[0] = (char)num_users;
-
-    for (auto e : sockets) {
-        if (SDLNet_TCP_Send(e.second, (void *)raw_send_data, BUFFER_SIZE) < BUFFER_SIZE) {
-            debug = (char*)SDLNet_GetError();
-            debug_init = true;
-            debug_error = true;
         }
     }
     

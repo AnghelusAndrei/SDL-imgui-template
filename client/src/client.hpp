@@ -1,30 +1,27 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <bits/stdc++.h>
-#include "SDL_net.h"
-#include "data.hpp"
+#pragma once
+#include "client_thread.hpp"
 
 class Client{
     public:
-        Client(uint16_t port, char *ip);
+        Client();
         ~Client();
+        
+        bool Connect(uint16_t port, char *ip);
+        bool Disconnect();
+        bool InitRecieveingThread();
+        bool InitSendingThread();
         recieved *Recieve();
-        void Send(sent *data);
+        void Send(sent *cpy);
+        debug_data GetDebug();
+        IPaddress GetIP();
+        
+        //this is where every client-related data is stored
+        thread_data *data;
 
-        IPaddress server_address;
+        recieved main_recieved_data;
 
     private:
-        uint64_t Hash_Address(uint32_t host, uint16_t port);
-        TCPsocket socket;
-
-        //data that needs to be passed to the window 
-        char *debug;
-        bool debug_init = false;
-        bool debug_error = false;
-
-        recieved *ServerData;
-        sent *ClientData;
-
-    friend class App;
+        SDL_Thread *recieveThread;
+        SDL_Thread *sendThread;
+        bool connected = false;
 };
