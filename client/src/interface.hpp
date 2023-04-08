@@ -21,6 +21,7 @@ class Interface{
     ImGuiIO io;
 
     Client *client;
+    server_package *server;
 
     client_package data;
 

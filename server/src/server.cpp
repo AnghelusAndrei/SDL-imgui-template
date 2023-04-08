@@ -81,7 +81,7 @@ bool Server::Listen(){
 
         // Send data to all connected users
         char raw_send_data[s_package_size] = "";
-        uint8_t num_users = (uint8_t)(clients.size());
+        s_package.num_users = (uint8_t)(clients.size());
         memcpy(raw_send_data, &s_package, sizeof(s_package));
 
         for (auto e : sockets) {
@@ -145,15 +145,22 @@ bool Server::Listen(){
                 continue;
             }
 
-            memcpy(&c_package, buffer, sizeof(buffer));
-            clients[e.first].package = &c_package;
+            memcpy(&clients[e.first].package, buffer, sizeof(buffer));
 
 
             //impelentation specific
-            std::strcpy(s_package.text[0], s_package.text[1]);
-            std::strcpy(s_package.text[1], s_package.text[2]);
-            std::strcpy(s_package.text[2], s_package.text[3]);
-            std::strcpy(s_package.text[3], c_package.text);
+            if(strlen(clients[e.first].package.text)){
+                char txt[80] = "";
+                std::strcpy(s_package.text1, s_package.text2);
+                std::strcpy(s_package.text2, s_package.text3);
+                std::strcpy(s_package.text3, s_package.text4);
+                std::strcpy(txt, clients[e.first].package.name);
+                txt[strlen(clients[e.first].package.name)] = ':';
+                txt[strlen(clients[e.first].package.name) + 1] = ' ';
+                txt[strlen(clients[e.first].package.name) + 1 + strlen(clients[e.first].package.text)] = '\0';
+                std::strcpy(txt+strlen(clients[e.first].package.name)+2, clients[e.first].package.text);
+                std::strcpy(s_package.text4, txt);
+            }
         }
     }
     

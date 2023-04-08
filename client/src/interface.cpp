@@ -31,6 +31,8 @@ Interface::Interface(Client *client_) : client(client_){
 
     ImGui_ImplSDL2_InitForSDLRenderer(window, renderer);
     ImGui_ImplSDLRenderer_Init(renderer);
+
+    server = new server_package();
 }
 
 Interface::~Interface(){
@@ -72,7 +74,7 @@ bool Interface::frame(){
     //get data from client thread
     debug_data debug = client->GetDebug();
     IPaddress address = client->GetIP();
-    server_package *server = client->s_package();
+    server = client->s_package();
 
     {
         ImVec2 window_size = GetWindowSize();
@@ -101,8 +103,9 @@ bool Interface::frame(){
         for (int i=0; i<4 ;++i)
             parts[i] = ((uint8_t*)&address.host)[3-i];
         ImGui::Text("Established server connection on server port %i and local ip %i.%i.%i.%i", address.port, (int)parts[3], (int)parts[2], (int)parts[1], (int)parts[0]); 
+        ImGui::Text("users connected: %i", server->num_users);
         
-        ImGui::BeginChild("Interface", ImVec2(0, 50), true);
+        ImGui::BeginChild("Interface", ImVec2(0, 40), true);
         ImGui::Text("Input name here:");
         ImGui::SameLine();
 
@@ -122,10 +125,10 @@ bool Interface::frame(){
         ImGui::EndChild();
 
         ImGui::BeginChild("chat", ImVec2(0, 0), true);
-        ImGui::Text(server->text[0]);
-        ImGui::Text(server->text[1]);
-        ImGui::Text(server->text[2]);
-        ImGui::Text(server->text[3]);
+        ImGui::Text(server->text1);
+        ImGui::Text(server->text2);
+        ImGui::Text(server->text3);
+        ImGui::Text(server->text4);
 
         ImGui::InputText("text", input_text, IM_ARRAYSIZE(input_text));
 

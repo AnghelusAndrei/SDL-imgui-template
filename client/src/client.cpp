@@ -35,7 +35,7 @@ static int c_thread(void *data){
         if(!threadData->c_package_bool){
             threadData->WaitForMutex(threadData->c_package_mutex);
             char buffer[threadData->c_package_size] = "";
-            memcpy(buffer, &threadData->c_package, sizeof(threadData->c_package));
+            memcpy(buffer, threadData->c_package, sizeof(*threadData->c_package));
             if (SDLNet_TCP_Send(threadData->socket, (void *)buffer, threadData->c_package_size) < threadData->c_package_size) {
                 DebugError(threadData, (char*)SDLNet_GetError());
             }
@@ -66,7 +66,7 @@ static int s_thread(void *data){
             threadData->WaitForMutex(threadData->s_package_mutex);
             char buffer[threadData->s_package_size] = "";
             if (SDLNet_TCP_Recv(threadData->socket, buffer, threadData->s_package_size)){
-                memcpy(&threadData->s_package, buffer, sizeof(buffer));
+                memcpy(threadData->s_package, buffer, sizeof(buffer));
             }
             threadData->s_package_bool = true;
             SDL_mutexV(threadData->s_package_mutex);

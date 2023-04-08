@@ -13,7 +13,10 @@ typedef struct{
 
 typedef struct{
     uint8_t num_users;
-    char text[4][64];
+    char text1[64];
+    char text2[64];
+    char text3[64];
+    char text4[64];
 } server_package;
 
 //--

@@ -105,25 +105,26 @@ bool App::Frame(){
         ImGui::Text("The server is ran on port %i and local ip %i.%i.%i.%i", server->port, (int)parts[3], (int)parts[2], (int)parts[1], (int)parts[0]); 
         ImGui::Text("connected clients: %i", server->clients.size());
         ImGui::Text("ready sockets: %i", server->num_ready);
+        ImGui::Text("sizeof c_package: %i", server->c_package_size);
+        ImGui::Text("sizeof s_package: %i", server->s_package_size);
 
         ImGui::SeparatorText("Clients");
 
-        ImGui::BeginChild("clients", ImVec2(0, 0), true);
+        ImGui::BeginChild("clients", ImVec2(0, 60), true);
         for (auto client : server->clients){
             for (int i=0; i<4 ;++i)
                 parts[i] = ((uint8_t*)&client.second.host)[3-i];
             ImGui::BulletText("Client id: host: %i.%i.%i.%i, port: %i. properites: name:", (int)parts[3], (int)parts[2], (int)parts[1], (int)parts[0], client.second.port);
             ImGui::SameLine();
-            ImGui::Text(client.second.package->name);
-            ImGui::Text(client.second.package->text);
+            ImGui::Text(client.second.package.name);
         }
         ImGui::EndChild();
         
         ImGui::BeginChild("text", ImVec2(0, 0), true);
-        ImGui::Text(server->s_package.text[0]);
-        ImGui::Text(server->s_package.text[1]);
-        ImGui::Text(server->s_package.text[2]);
-        ImGui::Text(server->s_package.text[3]);
+        ImGui::Text(server->s_package.text1);
+        ImGui::Text(server->s_package.text2);
+        ImGui::Text(server->s_package.text3);
+        ImGui::Text(server->s_package.text4);
         ImGui::EndChild();
 
         ImGui::End();

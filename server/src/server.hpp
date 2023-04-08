@@ -22,7 +22,6 @@ class Server{
         uint16_t num_ready = 0;
 
         //packages
-        client_package c_package;
         server_package s_package;
 
 
