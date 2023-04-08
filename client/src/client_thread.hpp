@@ -9,7 +9,7 @@
 
 class thread_data{
 public:
-    thread_data(sent *client_data_, recieved *server_data_, debug_data *debug_);
+    thread_data(client_package *c_package_, server_package *s_package_, debug_data *debug_);
     ~thread_data();
 
     //data
@@ -23,7 +23,7 @@ public:
     /*
     the data being sent to the server
     */
-    sent *client_data;
+    client_package *c_package;
 
     /*
     *this is used for communication between threads
@@ -33,12 +33,12 @@ public:
     it is turned false when data is sent to the server
     and true when new data is waiting to be sent
     */
-    bool data_sent = false;
+    bool c_package_bool = false;
 
     /*
     this is the data recieved from the server
     */
-    recieved *server_data;
+    server_package *s_package;
 
     /*
     *this is used for communication between threads
@@ -49,17 +49,21 @@ public:
     and false after the data is recieved from the client by the 
     main thread
     */
-    bool data_recieved = false;
+    bool s_package_bool = false;
 
     debug_data *debug;
     IPaddress server_address;
 
     //mutexes
     SDL_mutex *client_active_mutex;
-    SDL_mutex *client_data_mutex;
-    SDL_mutex *server_data_mutex;
+    SDL_mutex *c_package_mutex;
+    SDL_mutex *s_package_mutex;
     SDL_mutex *debug_mutex;
     SDL_mutex *ip_mutex;
+
+    //package size
+    size_t s_package_size;
+    size_t c_package_size;
 
     //this function is blocking
     bool WaitForMutex(SDL_mutex *mutex);

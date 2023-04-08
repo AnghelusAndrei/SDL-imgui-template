@@ -72,8 +72,7 @@ bool Interface::frame(){
     //get data from client thread
     debug_data debug = client->GetDebug();
     IPaddress address = client->GetIP();
-    sent data((char*)std::string("").c_str());
-    recieved *server = client->Recieve();
+    server_package *server = client->s_package();
 
     {
         ImVec2 window_size = GetWindowSize();
@@ -103,7 +102,7 @@ bool Interface::frame(){
             parts[i] = ((uint8_t*)&address.host)[3-i];
         ImGui::Text("Established server connection on server port %i and local ip %i.%i.%i.%i", address.port, (int)parts[3], (int)parts[2], (int)parts[1], (int)parts[0]); 
         
-        ImGui::BeginChild("Interface", ImVec2(0, 0), true);
+        ImGui::BeginChild("Interface", ImVec2(0, 50), true);
         ImGui::Text("Input name here:");
         ImGui::SameLine();
 
@@ -112,21 +111,30 @@ bool Interface::frame(){
         reading without using any mutex keeps memory coherency,
         but may have non coherent results
         */
-        ImGui::InputText(client->data->client_data->buffer, input, IM_ARRAYSIZE(input));
+        ImGui::InputText(client->data->c_package->name, input_name, IM_ARRAYSIZE(input_name));
 
         ImGui::SameLine();
-        if(ImGui::Button("Submit", ImVec2(0,0)) && std::strlen(input) > 0){
-            std::strcpy(data.buffer, input);
+        if(ImGui::Button("Submit", ImVec2(0,0)) && std::strlen(input_name) > 0){
+            std::strcpy(data.name, input_name);
             client->Send(&data);
         }
 
-        ImGui::BeginChild("clients", ImVec2(0, 0), true);
-        ImGui::Text("users connected: %i", server->users);
-        ImGui::Text("time: %i", (uint8_t)server->buffer[1]);
-        ImGui::Text("Raw server buffer:");
-        ImGui::SameLine();
-        ImGui::Text(server->buffer);
         ImGui::EndChild();
+
+        ImGui::BeginChild("chat", ImVec2(0, 0), true);
+        ImGui::Text(server->text[0]);
+        ImGui::Text(server->text[1]);
+        ImGui::Text(server->text[2]);
+        ImGui::Text(server->text[3]);
+
+        ImGui::InputText("text", input_text, IM_ARRAYSIZE(input_text));
+
+        ImGui::SameLine();
+        if(ImGui::Button("Submit", ImVec2(0,0)) && std::strlen(input_text) > 0){
+            std::strcpy(data.text, input_text);
+            client->Send(&data);
+        }
+
         ImGui::EndChild();
 
         ImGui::End();

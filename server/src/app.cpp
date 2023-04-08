@@ -45,6 +45,7 @@ App::~App(){
     ImGui_ImplSDL2_Shutdown();
     ImGui::DestroyContext();
 
+    delete server;
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     SDL_Quit();
@@ -74,7 +75,7 @@ bool App::Frame(){
     ImGui_ImplSDL2_NewFrame();
     ImGui::NewFrame();
 
-    server->Run();
+    server->Listen();
     {
         ImVec2 window_size = GetWindowSize();
         ImGui::SetNextWindowPos(ImVec2(0,0));
@@ -102,21 +103,28 @@ bool App::Frame(){
         for (int i=0; i<4 ;++i)
             parts[i] = ((uint8_t*)&server->ip.host)[3-i];
         ImGui::Text("The server is ran on port %i and local ip %i.%i.%i.%i", server->port, (int)parts[3], (int)parts[2], (int)parts[1], (int)parts[0]); 
-        ImGui::Text("connected clients: %i", server->ServerData->clients.size());
+        ImGui::Text("connected clients: %i", server->clients.size());
         ImGui::Text("ready sockets: %i", server->num_ready);
 
         ImGui::SeparatorText("Clients");
 
         ImGui::BeginChild("clients", ImVec2(0, 0), true);
-        for (auto client : server->ServerData->clients){
+        for (auto client : server->clients){
             for (int i=0; i<4 ;++i)
                 parts[i] = ((uint8_t*)&client.second.host)[3-i];
             ImGui::BulletText("Client id: host: %i.%i.%i.%i, port: %i. properites: name:", (int)parts[3], (int)parts[2], (int)parts[1], (int)parts[0], client.second.port);
             ImGui::SameLine();
-            ImGui::Text(client.second.name);
+            ImGui::Text(client.second.package->name);
+            ImGui::Text(client.second.package->text);
         }
         ImGui::EndChild();
         
+        ImGui::BeginChild("text", ImVec2(0, 0), true);
+        ImGui::Text(server->s_package.text[0]);
+        ImGui::Text(server->s_package.text[1]);
+        ImGui::Text(server->s_package.text[2]);
+        ImGui::Text(server->s_package.text[3]);
+        ImGui::EndChild();
 
         ImGui::End();
     }

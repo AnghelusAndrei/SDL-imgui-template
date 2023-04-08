@@ -1,9 +1,7 @@
 #include "server.hpp"
 #include "SDL_net.h"
 
-Server::Server(const uint16_t &port_) : port(port_){
-    ServerData = new data();
-
+Server::Server(const uint16_t &port_) : port(port_), s_package_size(sizeof(server_package)), c_package_size(sizeof(client_package)){
     if (SDLNet_Init() < 0) { 
         debug = (char*)SDLNet_GetError();
         debug_init = true;
@@ -52,7 +50,7 @@ Server::~Server(){
             SDLNet_TCP_DelSocket(socket_set,  client_socket);
             SDLNet_TCP_Close(client_socket);
             sockets.erase(e.first);
-            ServerData->clients.erase(e.first);
+            clients.erase(e.first);
         }
     }
     
@@ -66,13 +64,13 @@ uint64_t Server::Hash_Address(uint32_t host, uint16_t port){
 }
 
 
-data *Server::Run(){
+bool Server::Listen(){
     if(time == 0){
         time = SDL_GetTicks();
-        return ServerData;
+        return false;
     }
     if(SDL_GetTicks() < time + SERVER_DELAY){
-        return ServerData;
+        return false;
     }
 
     time = SDL_GetTicks();
@@ -82,19 +80,18 @@ data *Server::Run(){
         // NOTE: none of the sockets are ready
 
         // Send data to all connected users
-        char raw_send_data[BUFFER_SIZE] = "";
-        uint8_t num_users = (uint8_t)(ServerData->clients.size());
-        raw_send_data[0] = (char)num_users;
-        raw_send_data[1] = (char)(SDL_GetTicks()%256);
+        char raw_send_data[s_package_size] = "";
+        uint8_t num_users = (uint8_t)(clients.size());
+        memcpy(raw_send_data, &s_package, sizeof(s_package));
 
         for (auto e : sockets) {
-            if (SDLNet_TCP_Send(e.second, (void *)raw_send_data, BUFFER_SIZE) < BUFFER_SIZE) {
+            if (SDLNet_TCP_Send(e.second, (void *)raw_send_data, s_package_size) < s_package_size) {
                 debug = (char*)SDLNet_GetError();
                 debug_init = true;
                 debug_error = true;
             }
         }
-        return ServerData;
+        return true;
     }
 
     //check for a new client connection
@@ -122,10 +119,9 @@ data *Server::Run(){
                     debug_init = true;
                     
                     Client client;
-                    std::strcpy(client.name, (char*)std::string("unnamed").c_str());
                     client.host = address->host;
                     client.port = address->port;
-                    ServerData->clients.insert(std::make_pair(id, client));
+                    clients.insert(std::make_pair(id, client));
                 }
             }
         }
@@ -135,8 +131,8 @@ data *Server::Run(){
     for (auto e : sockets) {
         TCPsocket client_socket = e.second;
         if (SDLNet_SocketReady( client_socket)) {
-            char buffer[BUFFER_SIZE];
-            int bytesReceived = SDLNet_TCP_Recv( client_socket, buffer, BUFFER_SIZE);
+            char buffer[c_package_size];
+            int bytesReceived = SDLNet_TCP_Recv( client_socket, buffer, c_package_size);
             if (bytesReceived <= 0) {
                 // Client disconnected
                 debug = (char*)std::string("client disconnected").c_str();
@@ -145,15 +141,22 @@ data *Server::Run(){
                 SDLNet_TCP_Close(client_socket);
                 sockets.erase(e.first);
 
-                ServerData->clients.erase(e.first);
+                clients.erase(e.first);
                 continue;
-            }else if(bytesReceived == BUFFER_SIZE){
-                std::strcpy(ServerData->clients[e.first].name, buffer);
             }
 
+            memcpy(&c_package, buffer, sizeof(buffer));
+            clients[e.first].package = &c_package;
+
+
+            //impelentation specific
+            std::strcpy(s_package.text[0], s_package.text[1]);
+            std::strcpy(s_package.text[1], s_package.text[2]);
+            std::strcpy(s_package.text[2], s_package.text[3]);
+            std::strcpy(s_package.text[3], c_package.text);
         }
     }
     
     
-    return ServerData;
+    return true;
 }

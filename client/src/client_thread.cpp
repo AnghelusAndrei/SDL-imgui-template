@@ -1,23 +1,23 @@
 #include "client_thread.hpp"
 
-thread_data::thread_data(sent *client_data_, recieved *server_data_, debug_data *debug_) :
-client_data(client_data_), server_data(server_data_), debug(debug_)
+thread_data::thread_data(client_package *c_package_, server_package *s_package_, debug_data *debug_) :
+c_package(c_package_), s_package(s_package_), debug(debug_), s_package_size(sizeof(server_package)), c_package_size(sizeof(client_package))
 {
     client_active_mutex = SDL_CreateMutex();
-    client_data_mutex = SDL_CreateMutex();
-    server_data_mutex = SDL_CreateMutex();
+    c_package_mutex = SDL_CreateMutex();
+    s_package_mutex = SDL_CreateMutex();
     debug_mutex = SDL_CreateMutex();
     ip_mutex = SDL_CreateMutex();
 }
 
 thread_data::~thread_data(){
-    delete client_data;
+    delete c_package;
+    delete s_package;
     delete debug;
-    delete server_data;
 
     SDL_DestroyMutex(client_active_mutex);
-    SDL_DestroyMutex(client_data_mutex);
-    SDL_DestroyMutex(server_data_mutex);
+    SDL_DestroyMutex(c_package_mutex);
+    SDL_DestroyMutex(s_package_mutex);
     SDL_DestroyMutex(debug_mutex);
     SDL_DestroyMutex(ip_mutex);
 }

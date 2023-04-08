@@ -1,17 +1,26 @@
 #include <bits/stdc++.h>
-#define MAX_SOCKETS 30
-#define SERVER_DELAY 300
-#define BUFFER_SIZE 512
 
-#define GLOBAL_DATA 1
-#define REQUESTED_DATA 2
+#define MAX_SOCKETS 30
+#define SERVER_DELAY 10
+
+//--packages
+
+typedef struct{
+    char name[16];
+    char text[64];
+    bool request;
+} client_package;
+
+
+typedef struct{
+    uint8_t num_users;
+    char text[4][64];
+} server_package;
+
+//--
 
 typedef struct {
-    char name[BUFFER_SIZE];
+    client_package *package;
     uint16_t port;
     uint32_t host;
 } Client;
-
-struct data{
-    std::unordered_map<uint64_t, Client> clients;
-};

@@ -8,20 +8,21 @@ class Client{
         
         bool Connect(uint16_t port, char *ip);
         bool Disconnect();
-        bool InitRecieveingThread();
-        bool InitSendingThread();
-        recieved *Recieve();
-        void Send(sent *cpy);
+        bool InitC_Thread();
+        bool InitS_Thread();
+
+        server_package *s_package();
+        void Send(client_package *cpy);
         debug_data GetDebug();
         IPaddress GetIP();
         
         //this is where every client-related data is stored
         thread_data *data;
 
-        recieved main_recieved_data;
+        server_package s_data;
 
     private:
-        SDL_Thread *recieveThread;
-        SDL_Thread *sendThread;
+        SDL_Thread *s_Thread;
+        SDL_Thread *c_Thread;
         bool connected = false;
 };
