@@ -140,7 +140,10 @@ Client::~Client(){
 
 bool Client::InitS_Thread(){
     s_Thread = SDL_CreateThread(s_thread, "s_thread", data);
-    if(s_Thread)return true;
+    if(s_Thread){
+        Send(data->c_package);
+        return true;
+    }
     return false;
 }
 

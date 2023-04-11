@@ -121,10 +121,9 @@ bool App::Frame(){
         ImGui::EndChild();
         
         ImGui::BeginChild("text", ImVec2(0, 0), true);
-        ImGui::Text(server->s_package.text1);
-        ImGui::Text(server->s_package.text2);
-        ImGui::Text(server->s_package.text3);
-        ImGui::Text(server->s_package.text4);
+        for(auto text : server->s_package.text){
+            ImGui::Text(text);
+        }
         ImGui::EndChild();
 
         ImGui::End();

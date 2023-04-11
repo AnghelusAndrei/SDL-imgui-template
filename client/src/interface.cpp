@@ -125,10 +125,9 @@ bool Interface::frame(){
         ImGui::EndChild();
 
         ImGui::BeginChild("chat", ImVec2(0, 0), true);
-        ImGui::Text(server->text1);
-        ImGui::Text(server->text2);
-        ImGui::Text(server->text3);
-        ImGui::Text(server->text4);
+        for(auto text : server->text){
+            ImGui::Text(text);
+        }
 
         ImGui::InputText("text", input_text, IM_ARRAYSIZE(input_text));
 

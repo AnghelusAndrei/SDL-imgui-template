@@ -65,32 +65,24 @@ uint64_t Server::Hash_Address(uint32_t host, uint16_t port){
 
 
 bool Server::Listen(){
-    if(time == 0){
-        time = SDL_GetTicks();
-        return false;
-    }
-    if(SDL_GetTicks() < time + SERVER_DELAY){
-        return false;
-    }
 
-    time = SDL_GetTicks();
+    // Send data to all connected users
+    char raw_send_data[s_package_size] = "";
+    s_package.num_users = (uint8_t)(clients.size());
+    memcpy(raw_send_data, &s_package, sizeof(s_package));
+
+    for (auto e : sockets) {
+        if (SDLNet_TCP_Send(e.second, (void *)raw_send_data, s_package_size) < s_package_size) {
+            debug = (char*)SDLNet_GetError();
+            debug_init = true;
+            debug_error = true;
+        }
+    }
 
     num_ready = SDLNet_CheckSockets(socket_set, 0);
     if(num_ready <= 0) {
         // NOTE: none of the sockets are ready
 
-        // Send data to all connected users
-        char raw_send_data[s_package_size] = "";
-        s_package.num_users = (uint8_t)(clients.size());
-        memcpy(raw_send_data, &s_package, sizeof(s_package));
-
-        for (auto e : sockets) {
-            if (SDLNet_TCP_Send(e.second, (void *)raw_send_data, s_package_size) < s_package_size) {
-                debug = (char*)SDLNet_GetError();
-                debug_init = true;
-                debug_error = true;
-            }
-        }
         return true;
     }
 
@@ -137,6 +129,14 @@ bool Server::Listen(){
                 // Client disconnected
                 debug = (char*)std::string("client disconnected").c_str();
                 debug_init = true;
+
+                for(int i = 0; i < sizeof(s_package.text)/sizeof(clients[e.first].package.text) - 1; i++){
+                    std::strcpy(s_package.text[i], s_package.text[i+1]);
+                }
+                std::string txt = std::string("User ") + std::string(clients[e.first].package.name) + std::string(" left the room");
+
+                std::strcpy(s_package.text[sizeof(s_package.text)/sizeof(clients[e.first].package.text) - 1], (char*)txt.c_str());  
+
                 SDLNet_TCP_DelSocket(socket_set,  client_socket);
                 SDLNet_TCP_Close(client_socket);
                 sockets.erase(e.first);
@@ -145,21 +145,39 @@ bool Server::Listen(){
                 continue;
             }
 
+            char text[64];
+            char name[16];
+            std::strcpy(text, clients[e.first].package.text);
+            std::strcpy(name, clients[e.first].package.name);
+
             memcpy(&clients[e.first].package, buffer, sizeof(buffer));
 
 
             //impelentation specific
-            if(strlen(clients[e.first].package.text)){
-                char txt[80] = "";
-                std::strcpy(s_package.text1, s_package.text2);
-                std::strcpy(s_package.text2, s_package.text3);
-                std::strcpy(s_package.text3, s_package.text4);
-                std::strcpy(txt, clients[e.first].package.name);
-                txt[strlen(clients[e.first].package.name)] = ':';
-                txt[strlen(clients[e.first].package.name) + 1] = ' ';
-                txt[strlen(clients[e.first].package.name) + 1 + strlen(clients[e.first].package.text)] = '\0';
-                std::strcpy(txt+strlen(clients[e.first].package.name)+2, clients[e.first].package.text);
-                std::strcpy(s_package.text4, txt);
+            if(std::strcmp(name, clients[e.first].package.name) == 0){
+                for(int i = 0; i < sizeof(s_package.text)/sizeof(clients[e.first].package.text) - 1; i++){
+                    std::strcpy(s_package.text[i], s_package.text[i+1]);
+                }
+                std::string txt = std::string(clients[e.first].package.name) + ": " + std::string(clients[e.first].package.text);
+
+                std::strcpy(s_package.text[sizeof(s_package.text)/sizeof(clients[e.first].package.text) - 1], (char*)txt.c_str());
+            }else{
+                if(strlen(name) > 0){
+                    for(int i = 0; i < sizeof(s_package.text)/sizeof(clients[e.first].package.text) - 1; i++){
+                        std::strcpy(s_package.text[i], s_package.text[i+1]);
+                    }
+                    std::string txt = std::string("User ") + std::string(name) + std::string(" changed username to ") + std::string(clients[e.first].package.name);
+
+                    std::strcpy(s_package.text[sizeof(s_package.text)/sizeof(clients[e.first].package.text) - 1], (char*)txt.c_str());
+                }else{
+                    for(int i = 0; i < sizeof(s_package.text)/sizeof(clients[e.first].package.text) - 1; i++){
+                        std::strcpy(s_package.text[i], s_package.text[i+1]);
+                    }
+                    std::string txt = std::string("User ") + std::string(clients[e.first].package.name) + std::string(" joined the room");
+
+                    std::strcpy(s_package.text[sizeof(s_package.text)/sizeof(clients[e.first].package.text) - 1], (char*)txt.c_str());   
+                }
+
             }
         }
     }
