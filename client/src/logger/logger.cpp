@@ -13,7 +13,7 @@ void Log::Clear()
     LineOffsets.push_back(0);
 }
 
-void Log::AddLog(const char* fmt, ...) IM_FMTARGS(2)
+void Log::AddLog(const char* fmt, ...)
 {
     int old_size = Buf.size();
     va_list args;
@@ -25,7 +25,7 @@ void Log::AddLog(const char* fmt, ...) IM_FMTARGS(2)
             LineOffsets.push_back(old_size + 1);
 }
 
-void Log::Draw(const char* title, bool* p_open = NULL)
+void Log::Draw(const char* title, bool* p_open)
 {
     if (!ImGui::Begin(title, p_open))
     {

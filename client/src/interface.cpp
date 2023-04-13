@@ -82,7 +82,7 @@ bool Interface::frame(){
     Cube.position.z = 5;
 
     Cube.size.x = 1;
-    Cube.size.y = 2;
+    Cube.size.y = 1;
     Cube.size.z = 1;
 
     Cube.color = {255, 100, 50};
@@ -195,15 +195,15 @@ bool Interface::frame(){
     Cube.color.g = r2 > 255 ? (510 - r2) : r2;
     Cube.color.b = r3 > 255 ? (510 - r3) : r3;
 
-    /*int mouse_x, mouse_y;
+    int mouse_x, mouse_y;
     SDL_GetMouseState(&mouse_x, &mouse_y);
 
     Cube.position.x = tanf(sr::degToRad((((float)mouse_x - window_size.x/2)/window_size.x) * FOV)) * Cube.position.z;
-    Cube.position.y = tanf(sr::degToRad((((float)mouse_y - window_size.y/2)/window_size.y) * FOV)) * Cube.position.z;*/
+    Cube.position.y = tanf(sr::degToRad((((float)mouse_y - window_size.y/2)/window_size.y) * FOV)) * Cube.position.z;
 
     std::vector<sr::mesh> mesh_collection;
     mesh_collection.push_back(Cube);
-    sr::Frame(renderer, mesh_collection, Projection_Matrix, Camera, pDepthBuffer, light, (int)window_size.x, (int)window_size.y, false);
+    sr::Frame(renderer, mesh_collection, Projection_Matrix, Camera, pDepthBuffer, light, (int)window_size.x, (int)window_size.y, true);
     
 
     ImGui_ImplSDLRenderer_RenderDrawData(ImGui::GetDrawData());
