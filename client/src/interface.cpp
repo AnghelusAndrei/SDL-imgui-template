@@ -1,5 +1,6 @@
 #include "interface.hpp"
-#include "engine/engine.h"
+#include "engine/engine.hpp"
+#include "logger/logger.hpp"
 
 Interface::Interface(Client *client_) : client(client_){
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_GAMECONTROLLER) != 0)
@@ -81,7 +82,7 @@ bool Interface::frame(){
     Cube.position.z = 5;
 
     Cube.size.x = 1;
-    Cube.size.y = 1;
+    Cube.size.y = 2;
     Cube.size.z = 1;
 
     Cube.color = {255, 100, 50};
@@ -202,7 +203,7 @@ bool Interface::frame(){
 
     std::vector<sr::mesh> mesh_collection;
     mesh_collection.push_back(Cube);
-    sr::Frame(renderer, mesh_collection, Projection_Matrix, Camera, pDepthBuffer, light, (int)window_size.x, (int)window_size.y, true);
+    sr::Frame(renderer, mesh_collection, Projection_Matrix, Camera, pDepthBuffer, light, (int)window_size.x, (int)window_size.y, false);
     
 
     ImGui_ImplSDLRenderer_RenderDrawData(ImGui::GetDrawData());

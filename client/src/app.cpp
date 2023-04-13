@@ -2,7 +2,7 @@
 
 App::App(Client *client_) : client(client_)
 {
-    client->Connect(2000, (char*)std::string("192.168.1.6").c_str());
+    client->Connect(2000, (char*)std::string("localhost").c_str());
     client->InitC_Thread();
     client->InitS_Thread();
     interface = new Interface(client);
