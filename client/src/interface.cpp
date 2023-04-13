@@ -1,5 +1,5 @@
-#include "Interface.hpp"
-#include "SDL_net.h"
+#include "interface.hpp"
+#include "engine/engine.h"
 
 Interface::Interface(Client *client_) : client(client_){
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_GAMECONTROLLER) != 0)
@@ -33,6 +33,8 @@ Interface::Interface(Client *client_) : client(client_){
     ImGui_ImplSDLRenderer_Init(renderer);
 
     server = new server_package();
+
+
 }
 
 Interface::~Interface(){
@@ -64,7 +66,34 @@ bool Interface::frame(){
             return 0;
     }
 
-    
+    sr::mesh Cube;
+    sr::player_t Camera = {0,0,0,0,0};
+    sr::vec3 light;
+
+    Cube.LoadFile("./assets/sphere.obj", false);
+
+    light.x = -1;
+    light.y = -0.75;
+    light.z = -0.5;
+
+    Cube.position.x = 0;
+    Cube.position.y = 0;
+    Cube.position.z = 5;
+
+    Cube.size.x = 1;
+    Cube.size.y = 1;
+    Cube.size.z = 1;
+
+    Cube.color = {255, 100, 50};
+
+    ImVec2 window_size = GetWindowSize();
+
+    float FOV = 60;
+    float Zfar = 1000;
+    float Znear = 0.1;
+    sr::mat4x4 Projection_Matrix = sr::Matrix_Projection((int)window_size.x, (int)window_size.y, FOV, Zfar, Znear);
+    float *pDepthBuffer = new float[(int)window_size.x * (int)window_size.y];
+
 
 
     ImGui_ImplSDLRenderer_NewFrame();
@@ -77,9 +106,9 @@ bool Interface::frame(){
     server = client->s_package();
 
     {
-        ImVec2 window_size = GetWindowSize();
-        ImGui::SetNextWindowPos(ImVec2(0,0));
-        ImGui::SetNextWindowSize(window_size);
+        
+        //ImGui::SetNextWindowPos(ImVec2(0,0));
+        //ImGui::SetNextWindowSize(window_size);
 
         ImGui::Begin("Client");  
 
@@ -141,6 +170,9 @@ bool Interface::frame(){
 
         ImGui::End();
     }
+
+    bool open;
+    ImGui::ShowDemoWindow(&open);
     
 
     // Rendering
@@ -148,8 +180,35 @@ bool Interface::frame(){
     SDL_RenderSetScale(renderer, io.DisplayFramebufferScale.x, io.DisplayFramebufferScale.y);
     SDL_SetRenderDrawColor(renderer, (Uint8)(clear_color.x * 255), (Uint8)(clear_color.y * 255), (Uint8)(clear_color.z * 255), (Uint8)(clear_color.w * 255));
     SDL_RenderClear(renderer);
+
+
+    Cube.rotation.x = (float)(SDL_GetTicks()/50);
+    Cube.rotation.y = (float)(SDL_GetTicks()/50);
+    Cube.rotation.z = (float)(SDL_GetTicks()/50);
+
+    int r1 = (SDL_GetTicks()/20)%410 + 50;
+    int r2 = (SDL_GetTicks()/10)%410 + 50;
+    int r3 = (SDL_GetTicks()/25)%410 + 50;
+
+    Cube.color.r = r1 > 255 ? (510 - r1) : r1;
+    Cube.color.g = r2 > 255 ? (510 - r2) : r2;
+    Cube.color.b = r3 > 255 ? (510 - r3) : r3;
+
+    /*int mouse_x, mouse_y;
+    SDL_GetMouseState(&mouse_x, &mouse_y);
+
+    Cube.position.x = tanf(sr::degToRad((((float)mouse_x - window_size.x/2)/window_size.x) * FOV)) * Cube.position.z;
+    Cube.position.y = tanf(sr::degToRad((((float)mouse_y - window_size.y/2)/window_size.y) * FOV)) * Cube.position.z;*/
+
+    std::vector<sr::mesh> mesh_collection;
+    mesh_collection.push_back(Cube);
+    sr::Frame(renderer, mesh_collection, Projection_Matrix, Camera, pDepthBuffer, light, (int)window_size.x, (int)window_size.y, true);
+    
+
     ImGui_ImplSDLRenderer_RenderDrawData(ImGui::GetDrawData());
     SDL_RenderPresent(renderer);
+
+    delete pDepthBuffer;
 
     return 1;
 }

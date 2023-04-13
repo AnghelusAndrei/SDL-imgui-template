@@ -7,7 +7,6 @@
 #include "imgui/internal/imgui_impl_sdlrenderer.h"
 #include "client.hpp"
 
-
 class Interface{
     public:
     Interface(Client *client_);
@@ -31,6 +30,8 @@ class Interface{
 
     char input_name[16] = "";
     char input_text[64] = "";
+
+
 
     ImVec2 GetWindowSize();
 };

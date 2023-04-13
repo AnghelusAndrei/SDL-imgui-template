@@ -1,5 +1,4 @@
 #include "client.hpp"
-#include "SDL_net.h"
 
 
 void DebugError(thread_data *data, char *error){
