@@ -1,4 +1,4 @@
-#include "engine.hpp"
+#include "sr_core.hpp"
 
 #define sign(x) ((x > 0) ? 1 : ((x < 0) ? -1 : 0))
 #define x_off x - cx
@@ -743,7 +743,7 @@ void sr::bresanham(int x1, int y1, int x2, int y2, std::function<void(int, int)>
     int isSwaped = 0;
 
     // Swap if needed
-    if(abs(dy) > abs(dx))
+    if(std::abs(dy) > std::abs(dx))
     {
         // swap dx and dy
         float tdx = dx;
@@ -754,13 +754,13 @@ void sr::bresanham(int x1, int y1, int x2, int y2, std::function<void(int, int)>
     }
 
     // Decision parameter
-    float p = 2*(abs(dy)) - abs(dx);
+    float p = 2*(std::abs(dy)) - std::abs(dx);
 
     //Print Initial Point
     func(x,y);
 
     // Loop for dx times
-    for(int i = 0; i<= abs(dx);i++)
+    for(int i = 0; i<= std::abs(dx);i++)
     {
         // Depending on decision parameter
         if(p < 0)
@@ -773,14 +773,14 @@ void sr::bresanham(int x1, int y1, int x2, int y2, std::function<void(int, int)>
                 y = y+sy;
                 func(x,y);
             }
-            p = p + 2*abs(dy);
+            p = p + 2*std::abs(dy);
         }
         else
         {
             x = x+sx;
             y = y+sy;
             func(x,y);
-            p = p + 2*abs(dy) - 2*abs(dx);
+            p = p + 2*std::abs(dy) - 2*std::abs(dx);
         }
     }
 }
