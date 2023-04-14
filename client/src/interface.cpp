@@ -95,6 +95,10 @@ bool Interface::frame(){
     sr::mat4x4 Projection_Matrix = sr::Matrix_Projection((int)window_size.x, (int)window_size.y, FOV, Zfar, Znear);
     float *pDepthBuffer = new float[(int)window_size.x * (int)window_size.y];
 
+    std::function<void(sr::ivec2 pixel, sr::color color)> setpixel = [&](sr::ivec2 pixel, sr::color color){
+        SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, 255);
+        SDL_RenderDrawPoint(renderer, pixel.x, pixel.y);
+    };
 
 
     ImGui_ImplSDLRenderer_NewFrame();
@@ -203,7 +207,7 @@ bool Interface::frame(){
 
     std::vector<sr::mesh> mesh_collection;
     mesh_collection.push_back(Cube);
-    sr::Frame(renderer, mesh_collection, Projection_Matrix, Camera, pDepthBuffer, light, (int)window_size.x, (int)window_size.y, true);
+    sr::Render(setpixel, mesh_collection, Projection_Matrix, Camera, pDepthBuffer, light, (int)window_size.x, (int)window_size.y, true);
     
 
     ImGui_ImplSDLRenderer_RenderDrawData(ImGui::GetDrawData());

@@ -20,13 +20,13 @@ namespace sr{
 		vec3(float x_, float y_, float z_);
 	};
 
-	struct vec2_i
+	struct ivec2
 	{
 		int x = 0;
 		int y = 0;
 
-		vec2_i();
-		vec2_i(int x_, int y_);
+		ivec2();
+		ivec2(int x_, int y_);
 	};
 
 	struct color
@@ -86,16 +86,16 @@ namespace sr{
 //-----------------------------------------------------------------------------
 
 	vec3 Vector_Add(vec3 &v1, vec3 &v2);
-	vec2_i Vector_Add_i(vec2_i &v1, vec2_i &v2);
+	ivec2 Vector_Add_i(ivec2 &v1, ivec2 &v2);
 	vec3 Vector_Sub(vec3 &v1, vec3 &v2);
-	vec2_i Vector_Sub_i(vec2_i &v1, vec2_i &v2);
+	ivec2 Vector_Sub_i(ivec2 &v1, ivec2 &v2);
 	vec3 Vector_Mul(vec3 &v1, float k);
-	vec2_i Vector_Mul_i(vec2_i &v1, float k);
+	ivec2 Vector_Mul_i(ivec2 &v1, float k);
 	vec3 Vector_Div(vec3 &v1, float k);
 	float Vector_DotProduct(vec3 &v1, vec3 &v2);
-	float Vector_DotProduct_i(vec2_i &v1, vec2_i &v2);
+	float Vector_DotProduct_i(ivec2 &v1, ivec2 &v2);
 	float Vector_Length(vec3 &v);
-	float Vector_Length_i(vec2_i &v);
+	float Vector_Length_i(ivec2 &v);
 	vec3 Vector_Normalise(vec3 &v);
 	float dist(vec3 &p, vec3 &plane_n, vec3 &plane_p);
 	vec3 Vector_CrossProduct(vec3 a, vec3 b);
@@ -109,20 +109,20 @@ namespace sr{
 
 
 	float Triangle_Area(vec3 p[3]);
-	float Triangle_Area_i(vec2_i p[3]);
+	float Triangle_Area_i(ivec2 p[3]);
 	int Triangle_ClipAgainstPlane(vec3 plane_p, vec3 plane_n, triangle &in_tri, triangle &out_tri1, triangle &out_tri2);
-	vec3 Interpolate_Normal_i(vec2_i p[3], vec3 n[3], vec2_i fp);
+	vec3 Interpolate_Normal_i(ivec2 p[3], vec3 n[3], ivec2 fp);
 	vec3 Interpolate_Normal(vec3 p[3], vec3 n[3], vec3 fp);
-	vec2_i Interpolate_TextureCoords(vec2_i p[3], vec2_i t[3], vec2_i fp);
-	color Interpolate_Color(vec2_i p[3], color c[3], vec2_i fp);
+	ivec2 Interpolate_TextureCoords(ivec2 p[3], ivec2 t[3], ivec2 fp);
+	color Interpolate_Color(ivec2 p[3], color c[3], ivec2 fp);
 	void bresanham(int x1, int y1, int x2, int y2, std::function<void(int, int)>);
-	void Raster(sr::vec2_i p[3], std::function<void(sr::vec2_i)> pixel, int *scanline_buffer, int SCREEN_WIDTH, int SCREEN_HEIGHT);
-	void Raster_NonInterpolated(SDL_Renderer *renderer, vec2_i p[3], int *scanline_buffer, int SCREEN_WIDTH, int SCREEN_HEIGHT, color color);
-	void Raster_ColorInterpolated(SDL_Renderer *renderer, vec2_i p[3], int *scanline_buffer, int SCREEN_WIDTH, int SCREEN_HEIGHT, color colors[3]);
-	void Raster_NormalInterpolated(SDL_Renderer *renderer, vec2_i p[3], int *scanline_buffer, int SCREEN_WIDTH, int SCREEN_HEIGHT, color color, vec3 normals[3], vec3 light);
-	void Raster_ColorAndNormalInterpolated(SDL_Renderer *renderer, vec2_i p[3], int *scanline_buffer, int SCREEN_WIDTH, int SCREEN_HEIGHT, color colors[3], vec3 normals[3], vec3 light);
-	void Raster_TextureInterpolated(SDL_Renderer *renderer, vec2_i p[3], int *scanline_buffer, int SCREEN_WIDTH, int SCREEN_HEIGHT, color color, vec2_i TextureCoordonates);
-	void Raster_FullyInterpolated(SDL_Renderer *renderer, vec2_i p[3], int *scanline_buffer, int SCREEN_WIDTH, int SCREEN_HEIGHT, color color[3], vec3 normals[3], vec2_i TextureCoordonates[3], vec3 light, SDL_Texture *texture);
+	void Raster(sr::ivec2 p[3], std::function<void(sr::ivec2)> pixel, int *scanline_buffer, int SCREEN_WIDTH, int SCREEN_HEIGHT);
+	void Raster_NonInterpolated(std::function<void(sr::ivec2, sr::color)> setpixel, ivec2 p[3], int *scanline_buffer, int SCREEN_WIDTH, int SCREEN_HEIGHT, color color);
+	void Raster_ColorInterpolated(std::function<void(sr::ivec2, sr::color)> setpixel, ivec2 p[3], int *scanline_buffer, int SCREEN_WIDTH, int SCREEN_HEIGHT, color colors[3]);
+	void Raster_NormalInterpolated(std::function<void(sr::ivec2, sr::color)> setpixel, ivec2 p[3], int *scanline_buffer, int SCREEN_WIDTH, int SCREEN_HEIGHT, color color, vec3 normals[3], vec3 light);
+	void Raster_ColorAndNormalInterpolated(std::function<void(sr::ivec2, sr::color)> setpixel, ivec2 p[3], int *scanline_buffer, int SCREEN_WIDTH, int SCREEN_HEIGHT, color colors[3], vec3 normals[3], vec3 light);
+	void Raster_TextureInterpolated(std::function<void(sr::ivec2, sr::color)> setpixel, ivec2 p[3], int *scanline_buffer, int SCREEN_WIDTH, int SCREEN_HEIGHT, color color, ivec2 TextureCoordonates);
+	void Raster_FullyInterpolated(std::function<void(sr::ivec2, sr::color)> setpixel, ivec2 p[3], int *scanline_buffer, int SCREEN_WIDTH, int SCREEN_HEIGHT, color color[3], vec3 normals[3], ivec2 TextureCoordonates[3], vec3 light, SDL_Texture *texture);
 
 //-----------------------------------------------------------------------------
 // [SECTION] Matrix
@@ -143,5 +143,5 @@ namespace sr{
 // [SECTION] Rendering
 //-----------------------------------------------------------------------------
 
-	void Frame(SDL_Renderer *renderer, std::vector<mesh> mesh_collection, mat4x4 Projection_Matrix, player_t Camera, float *pDepthBuffer, vec3 light, int SCREEN_WIDTH, int SCREEN_HEIGHT, bool phong);
+	void Render(std::function<void(sr::ivec2, sr::color)> setpixel, std::vector<mesh> mesh_collection, mat4x4 Projection_Matrix, player_t Camera, float *pDepthBuffer, vec3 light, int SCREEN_WIDTH, int SCREEN_HEIGHT, bool phong);
 };

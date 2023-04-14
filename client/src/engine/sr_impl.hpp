@@ -11,8 +11,8 @@
 
 sr::vec3::vec3() : x(0.0f), y(.0f), z(0.0f), w(1.0f){}
 sr::vec3::vec3(float x_, float y_, float z_) : x(x_), y(y_), z(z_){}
-sr::vec2_i::vec2_i() : x(0), y(0){}
-sr::vec2_i::vec2_i(int x_, int y_) : x(x_), y(y_){}
+sr::ivec2::ivec2() : x(0), y(0){}
+sr::ivec2::ivec2(int x_, int y_) : x(x_), y(y_){}
 sr::color::color() : r(0), g(0), b(0){}
 sr::color::color(int r_, int g_, int b_) : r(r_), g(g_), b(b_){}
 sr::color::color(float r_, float g_, float b_) : r((int)r_), g((int)g_), b((int)b_){}
@@ -85,9 +85,9 @@ sr::vec3 sr::Vector_Add(sr::vec3 &v1, sr::vec3 &v2)
     return nv;
 }
 
-sr::vec2_i sr::Vector_Add_i(sr::vec2_i &v1, sr::vec2_i &v2)
+sr::ivec2 sr::Vector_Add_i(sr::ivec2 &v1, sr::ivec2 &v2)
 {
-    sr::vec2_i nv;
+    sr::ivec2 nv;
     nv.x = v1.x + v2.x;
     nv.y = v1.y + v2.y;
     return nv;
@@ -104,9 +104,9 @@ sr::vec3 sr::Vector_Sub(sr::vec3 &v1, sr::vec3 &v2)
     return nv;
 }
 
-sr::vec2_i sr::Vector_Sub_i(sr::vec2_i &v1, sr::vec2_i &v2)
+sr::ivec2 sr::Vector_Sub_i(sr::ivec2 &v1, sr::ivec2 &v2)
 {
-    sr::vec2_i nv;
+    sr::ivec2 nv;
     nv.x = v1.x - v2.x;
     nv.y = v1.y - v2.y;
     return nv;
@@ -122,9 +122,9 @@ sr::vec3 sr::Vector_Mul(sr::vec3 &v1, float k)
     return nv;
 }
 
-sr::vec2_i sr::Vector_Mul_i(sr::vec2_i &v1, float k)
+sr::ivec2 sr::Vector_Mul_i(sr::ivec2 &v1, float k)
 {
-    sr::vec2_i nv;
+    sr::ivec2 nv;
     nv.x = v1.x * k;
     nv.y = v1.y * k;
     return nv;
@@ -145,7 +145,7 @@ float sr::Vector_DotProduct(sr::vec3 &v1, sr::vec3 &v2)
     return v1.x*v2.x + v1.y*v2.y + v1.z*v2.z;
 }
 
-float sr::Vector_DotProduct_i(sr::vec2_i &v1, sr::vec2_i &v2)
+float sr::Vector_DotProduct_i(sr::ivec2 &v1, sr::ivec2 &v2)
 {
     return v1.x*v2.x + v1.y*v2.y;
 }
@@ -157,7 +157,7 @@ float sr::Vector_Length(sr::vec3 &v)
     return sqrtf(Vector_DotProduct(v, v));
 }
 
-float sr::Vector_Length_i(sr::vec2_i &v)
+float sr::Vector_Length_i(sr::ivec2 &v)
 {
     return sqrtf(Vector_DotProduct_i(v, v));
 }
@@ -313,9 +313,9 @@ float sr::Triangle_Area(sr::vec3 p[3]){
     return Vector_Length(n)/2;
 }
 
-float sr::Triangle_Area_i(sr::vec2_i p[3]){
-    sr::vec2_i AB = Vector_Sub_i(p[0], p[1]);
-    sr::vec2_i AC = Vector_Sub_i(p[0], p[2]);
+float sr::Triangle_Area_i(sr::ivec2 p[3]){
+    sr::ivec2 AB = Vector_Sub_i(p[0], p[1]);
+    sr::ivec2 AC = Vector_Sub_i(p[0], p[2]);
     sr::vec3 n = Vector_CrossProduct(sr::vec3(AB.x, AB.y, 0), sr::vec3(AC.x, AC.y, 0));
     return Vector_Length(n)/2;
 }
@@ -335,13 +335,13 @@ sr::vec3 sr::Vector_IntersectPlane(sr::vec3 &plane_p, sr::vec3 &plane_n, sr::vec
 }
 
 
-sr::vec3 sr::Interpolate_Normal_i(sr::vec2_i p[3], sr::vec3 n[3], sr::vec2_i fp){
+sr::vec3 sr::Interpolate_Normal_i(sr::ivec2 p[3], sr::vec3 n[3], sr::ivec2 fp){
     sr::vec3 normal;
 
     float area = Triangle_Area_i(p);
-    sr::vec2_i a1v[3] = (sr::vec2_i[3]){fp,p[1],p[2]};
-    sr::vec2_i a2v[3] = (sr::vec2_i[3]){p[0],fp,p[2]};
-    sr::vec2_i a3v[3] = (sr::vec2_i[3]){p[0],p[1],fp};
+    sr::ivec2 a1v[3] = (sr::ivec2[3]){fp,p[1],p[2]};
+    sr::ivec2 a2v[3] = (sr::ivec2[3]){p[0],fp,p[2]};
+    sr::ivec2 a3v[3] = (sr::ivec2[3]){p[0],p[1],fp};
     float a1 = Triangle_Area_i(a1v)/area;
     float a2 = Triangle_Area_i(a2v)/area;
     float a3 = Triangle_Area_i(a3v)/area;
@@ -378,34 +378,34 @@ sr::vec3 sr::Interpolate_Normal(sr::vec3 p[3], sr::vec3 n[3], sr::vec3 fp){
     return normal;
 }
 
-sr::vec2_i sr::Interpolate_TextureCoords(sr::vec2_i p[3], sr::vec2_i t[3], sr::vec2_i fp){
-    sr::vec2_i texture_c;
+sr::ivec2 sr::Interpolate_TextureCoords(sr::ivec2 p[3], sr::ivec2 t[3], sr::ivec2 fp){
+    sr::ivec2 texture_c;
 
     float area = Triangle_Area_i(p);
-    sr::vec2_i a1v[3] = (sr::vec2_i[3]){fp,p[1],p[2]};
-    sr::vec2_i a2v[3] = (sr::vec2_i[3]){p[0],fp,p[2]};
-    sr::vec2_i a3v[3] = (sr::vec2_i[3]){p[0],p[1],fp};
+    sr::ivec2 a1v[3] = (sr::ivec2[3]){fp,p[1],p[2]};
+    sr::ivec2 a2v[3] = (sr::ivec2[3]){p[0],fp,p[2]};
+    sr::ivec2 a3v[3] = (sr::ivec2[3]){p[0],p[1],fp};
     float a1 = Triangle_Area_i(a1v)/area;
     float a2 = Triangle_Area_i(a2v)/area;
     float a3 = Triangle_Area_i(a3v)/area;
 
-    sr::vec2_i x = Vector_Mul_i(t[0],a1);
-    sr::vec2_i u = Vector_Mul_i(t[1],a2);
-    sr::vec2_i v = Vector_Mul_i(t[2],a3);
-    sr::vec2_i y = Vector_Add_i(u,v);
+    sr::ivec2 x = Vector_Mul_i(t[0],a1);
+    sr::ivec2 u = Vector_Mul_i(t[1],a2);
+    sr::ivec2 v = Vector_Mul_i(t[2],a3);
+    sr::ivec2 y = Vector_Add_i(u,v);
 
     texture_c = Vector_Add_i(x,y);
 
     return texture_c;
 }
 
-sr::color sr::Interpolate_Color(sr::vec2_i p[3], sr::color c[3], sr::vec2_i fp){
+sr::color sr::Interpolate_Color(sr::ivec2 p[3], sr::color c[3], sr::ivec2 fp){
     sr::color color;
 
     float area = Triangle_Area_i(p);
-    sr::vec2_i a1v[3] = (sr::vec2_i[3]){fp,p[1],p[2]};
-    sr::vec2_i a2v[3] = (sr::vec2_i[3]){p[0],fp,p[2]};
-    sr::vec2_i a3v[3] = (sr::vec2_i[3]){p[0],p[1],fp};
+    sr::ivec2 a1v[3] = (sr::ivec2[3]){fp,p[1],p[2]};
+    sr::ivec2 a2v[3] = (sr::ivec2[3]){p[0],fp,p[2]};
+    sr::ivec2 a3v[3] = (sr::ivec2[3]){p[0],p[1],fp};
     float a1 = Triangle_Area_i(a1v)/area;
     float a2 = Triangle_Area_i(a2v)/area;
     float a3 = Triangle_Area_i(a3v)/area;
@@ -785,7 +785,7 @@ void sr::bresanham(int x1, int y1, int x2, int y2, std::function<void(int, int)>
     }
 }
 
-void sr::Raster(sr::vec2_i p[3], std::function<void(sr::vec2_i)> pixel, int *scanline_buffer, int SCREEN_WIDTH, int SCREEN_HEIGHT){
+void sr::Raster(sr::ivec2 p[3], std::function<void(sr::ivec2)> pixel, int *scanline_buffer, int SCREEN_WIDTH, int SCREEN_HEIGHT){
 
     int y_min_l = SCREEN_HEIGHT-1, y_max_l = 0;
     int *y_min = &y_min_l, *y_max = &y_max_l;
@@ -813,34 +813,32 @@ void sr::Raster(sr::vec2_i p[3], std::function<void(sr::vec2_i)> pixel, int *sca
 
     for(int y = *y_min; y <= *y_max; y++){
         for(int i = scanline_buffer[y]; i <= scanline_buffer[SCREEN_HEIGHT + y]; i++){
-            pixel(sr::vec2_i(i, y));
+            pixel(sr::ivec2(i, y));
         }
         scanline_buffer[y] = SCREEN_WIDTH-1;
         scanline_buffer[SCREEN_HEIGHT + y] = 0;
     }
 }
 
-void sr::Raster_NonInterpolated(SDL_Renderer *renderer, sr::vec2_i p[3], int *scanline_buffer, int SCREEN_WIDTH, int SCREEN_HEIGHT, sr::color color){
-    std::function<void(sr::vec2_i pixel)> f = [&](sr::vec2_i pixel)
+void sr::Raster_NonInterpolated(std::function<void(sr::ivec2, sr::color)> setpixel, sr::ivec2 p[3], int *scanline_buffer, int SCREEN_WIDTH, int SCREEN_HEIGHT, sr::color color){
+    std::function<void(sr::ivec2 pixel)> f = [&](sr::ivec2 pixel)
     {
-        SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, 255);
-        SDL_RenderDrawPoint(renderer, (int)pixel.x, (int)pixel.y);
+        setpixel(pixel, color);
     };
 
     Raster(p, f, scanline_buffer, SCREEN_WIDTH, SCREEN_HEIGHT);
 }
-void sr::Raster_ColorInterpolated(SDL_Renderer *renderer, sr::vec2_i p[3], int *scanline_buffer, int SCREEN_WIDTH, int SCREEN_HEIGHT, sr::color colors[3]){
-    std::function<void(sr::vec2_i pixel)> f = [&](sr::vec2_i pixel)
+void sr::Raster_ColorInterpolated(std::function<void(sr::ivec2, sr::color)> setpixel, sr::ivec2 p[3], int *scanline_buffer, int SCREEN_WIDTH, int SCREEN_HEIGHT, sr::color colors[3]){
+    std::function<void(sr::ivec2 pixel)> f = [&](sr::ivec2 pixel)
     {
         sr::color color = Interpolate_Color(p, colors, pixel);
-        SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, 255);
-        SDL_RenderDrawPoint(renderer, (int)pixel.x, (int)pixel.y);
+        setpixel(pixel, color);
     };
 
     Raster(p, f, scanline_buffer, SCREEN_WIDTH, SCREEN_HEIGHT);
 }
-void sr::Raster_NormalInterpolated(SDL_Renderer *renderer, sr::vec2_i p[3], int *scanline_buffer, int SCREEN_WIDTH, int SCREEN_HEIGHT, sr::color color, sr::vec3 normals[3], sr::vec3 light){
-    std::function<void(sr::vec2_i pixel)> f = [&](sr::vec2_i pixel)
+void sr::Raster_NormalInterpolated(std::function<void(sr::ivec2, sr::color)> setpixel, sr::ivec2 p[3], int *scanline_buffer, int SCREEN_WIDTH, int SCREEN_HEIGHT, sr::color color, sr::vec3 normals[3], sr::vec3 light){
+    std::function<void(sr::ivec2 pixel)> f = [&](sr::ivec2 pixel)
     {
         sr::vec3 normal = Interpolate_Normal_i(p, normals, pixel);
         normal = Vector_Normalise(normal);
@@ -852,14 +850,13 @@ void sr::Raster_NormalInterpolated(SDL_Renderer *renderer, sr::vec2_i p[3], int 
             (uint8_t)((float)color.g * light_value),
             (uint8_t)((float)color.b * light_value)
         );
-        SDL_SetRenderDrawColor(renderer, shade.r, shade.g, shade.b, 255);
-        SDL_RenderDrawPoint(renderer, (int)pixel.x, (int)pixel.y);
+        setpixel(pixel, shade);
     };
 
     Raster(p, f, scanline_buffer, SCREEN_WIDTH, SCREEN_HEIGHT);
 }
-void sr::Raster_ColorAndNormalInterpolated(SDL_Renderer *renderer, sr::vec2_i p[3], int *scanline_buffer, int SCREEN_WIDTH, int SCREEN_HEIGHT, sr::color colors[3], sr::vec3 normals[3], sr::vec3 light){
-    std::function<void(sr::vec2_i pixel)> f = [&](sr::vec2_i pixel)
+void sr::Raster_ColorAndNormalInterpolated(std::function<void(sr::ivec2, sr::color)> setpixel, sr::ivec2 p[3], int *scanline_buffer, int SCREEN_WIDTH, int SCREEN_HEIGHT, sr::color colors[3], sr::vec3 normals[3], sr::vec3 light){
+    std::function<void(sr::ivec2 pixel)> f = [&](sr::ivec2 pixel)
     {
         sr::vec3 normal = Interpolate_Normal_i(p, normals, pixel);
         normal = Vector_Normalise(normal);
@@ -872,8 +869,7 @@ void sr::Raster_ColorAndNormalInterpolated(SDL_Renderer *renderer, sr::vec2_i p[
             (uint8_t)((float)color.g * light_value),
             (uint8_t)((float)color.b * light_value)
         );
-        SDL_SetRenderDrawColor(renderer, shade.r, shade.g, shade.b, 255);
-        SDL_RenderDrawPoint(renderer, (int)pixel.x, (int)pixel.y);
+        setpixel(pixel, shade);
     };
 
     Raster(p, f, scanline_buffer, SCREEN_WIDTH, SCREEN_HEIGHT);
@@ -885,7 +881,7 @@ void sr::Raster_ColorAndNormalInterpolated(SDL_Renderer *renderer, sr::vec2_i p[
 //-----------------------------------------------------------------------------
 
 
-void sr::Frame(SDL_Renderer *renderer, std::vector<sr::mesh> mesh_collection, sr::mat4x4 Projection_Matrix, sr::player_t Camera, float *pDepthBuffer, sr::vec3 light, int SCREEN_WIDTH, int SCREEN_HEIGHT, bool phong){
+void sr::Render(std::function<void(sr::ivec2, sr::color)> setpixel, std::vector<sr::mesh> mesh_collection, sr::mat4x4 Projection_Matrix, sr::player_t Camera, float *pDepthBuffer, sr::vec3 light, int SCREEN_WIDTH, int SCREEN_HEIGHT, bool phong){
 
     int *scanline_buffer = new int[SCREEN_HEIGHT * 2];
 
@@ -1087,23 +1083,18 @@ void sr::Frame(SDL_Renderer *renderer, std::vector<sr::mesh> mesh_collection, sr
 
                         for (std::list<sr::triangle>::iterator t = listTriangles.begin(); t != listTriangles.end(); t++)
                         {
-                            sr::vec2_i p[3] = (sr::vec2_i[3]){
-                                sr::vec2_i((int)roundf(t->p[0].x),(int)roundf(t->p[0].y)),
-                                sr::vec2_i((int)roundf(t->p[1].x),(int)roundf(t->p[1].y)),
-                                sr::vec2_i((int)roundf(t->p[2].x),(int)roundf(t->p[2].y))
+                            sr::ivec2 p[3] = (sr::ivec2[3]){
+                                sr::ivec2((int)roundf(t->p[0].x),(int)roundf(t->p[0].y)),
+                                sr::ivec2((int)roundf(t->p[1].x),(int)roundf(t->p[1].y)),
+                                sr::ivec2((int)roundf(t->p[2].x),(int)roundf(t->p[2].y))
                             };
 
+                            sr::color color = sr::color( LZ(t->c.r + mesh.color.r - 255), LZ(t->c.g + mesh.color.g - 255), LZ(t->c.b + mesh.color.b - 255));
+
                             if(!mesh.texture){
-                                sr::color color = sr::color( LZ(t->c.r + mesh.color.r - 255), LZ(t->c.g + mesh.color.g - 255), LZ(t->c.b + mesh.color.b - 255));
-                                Raster_NonInterpolated(renderer, p, scanline_buffer, SCREEN_WIDTH, SCREEN_HEIGHT, color);
+                                Raster_NonInterpolated(setpixel, p, scanline_buffer, SCREEN_WIDTH, SCREEN_HEIGHT, color);
                             }else{
-                                const std::vector< SDL_Vertex > verts =
-                                {
-                                    { SDL_FPoint{ t->p[0].x, t->p[0].y }, SDL_Color{ 255, 255, 255, 255 }, SDL_FPoint{ t->t[0].x, t->t[0].y }, },
-                                    { SDL_FPoint{ t->p[1].x, t->p[1].y }, SDL_Color{ 255, 255, 255, 255 }, SDL_FPoint{ t->t[1].x, t->t[1].y }, },
-                                    { SDL_FPoint{ t->p[2].x, t->p[2].y }, SDL_Color{ 255, 255, 255, 255 }, SDL_FPoint{ t->t[2].x, t->t[2].y }, },
-                                };
-                                SDL_RenderGeometry( renderer, mesh.texture, verts.data(), verts.size(), nullptr, 0 );
+                                //TODO: Raster_TextureInterpolated
                             }
                         }
                     }
@@ -1236,10 +1227,10 @@ void sr::Frame(SDL_Renderer *renderer, std::vector<sr::mesh> mesh_collection, sr
 
                         for (std::list<sr::triangle>::iterator t = listTriangles.begin(); t != listTriangles.end(); t++)
                         {
-                            sr::vec2_i p[3] = (sr::vec2_i[3]){
-                                sr::vec2_i((int)floorf(t->p[0].x),(int)floorf(t->p[0].y)),
-                                sr::vec2_i((int)floorf(t->p[1].x),(int)floorf(t->p[1].y)),
-                                sr::vec2_i((int)floorf(t->p[2].x),(int)floorf(t->p[2].y))
+                            sr::ivec2 p[3] = (sr::ivec2[3]){
+                                sr::ivec2((int)floorf(t->p[0].x),(int)floorf(t->p[0].y)),
+                                sr::ivec2((int)floorf(t->p[1].x),(int)floorf(t->p[1].y)),
+                                sr::ivec2((int)floorf(t->p[2].x),(int)floorf(t->p[2].y))
                             };
 
                             t->n[0] = Vector_Normalise(t->n[0]);
@@ -1247,15 +1238,9 @@ void sr::Frame(SDL_Renderer *renderer, std::vector<sr::mesh> mesh_collection, sr
                             t->n[2] = Vector_Normalise(t->n[2]);
 
                             if(!mesh.texture){
-                                Raster_NormalInterpolated(renderer, p, scanline_buffer, SCREEN_WIDTH, SCREEN_HEIGHT, mesh.color, t->n, light);
+                                Raster_NormalInterpolated(setpixel, p, scanline_buffer, SCREEN_WIDTH, SCREEN_HEIGHT, mesh.color, t->n, light);
                             }else{
-                                const std::vector< SDL_Vertex > verts =
-                                {
-                                    { SDL_FPoint{ t->p[0].x, t->p[0].y }, SDL_Color{ 255, 255, 255, 255 }, SDL_FPoint{ t->t[0].x, t->t[0].y }, },
-                                    { SDL_FPoint{ t->p[1].x, t->p[1].y }, SDL_Color{ 255, 255, 255, 255 }, SDL_FPoint{ t->t[1].x, t->t[1].y }, },
-                                    { SDL_FPoint{ t->p[2].x, t->p[2].y }, SDL_Color{ 255, 255, 255, 255 }, SDL_FPoint{ t->t[2].x, t->t[2].y }, },
-                                };
-                                SDL_RenderGeometry( renderer, mesh.texture, verts.data(), verts.size(), nullptr, 0 );
+                                //TODO: Raster_FullyInterpolated /w texture
                             }
                         }
                     }
