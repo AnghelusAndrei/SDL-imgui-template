@@ -6,6 +6,7 @@
 #include "imgui/internal/imgui_impl_sdl2.h"
 #include "imgui/internal/imgui_impl_sdlrenderer.h"
 #include "client.hpp"
+#include "engine/sr_core.hpp"
 
 class Interface{
     public:
@@ -31,7 +32,13 @@ class Interface{
     char input_name[16] = "";
     char input_text[64] = "";
 
+    uint32_t ms_f1;
+    uint32_t ms_f2;
 
+    sr::internal_buffer_object *buffers;
+    sr::mesh Cube;
+    sr::player_t Camera = {0,0,0,0,0};
+    sr::vec3 light;
 
     ImVec2 GetWindowSize();
 };

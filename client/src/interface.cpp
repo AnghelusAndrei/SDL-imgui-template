@@ -1,5 +1,4 @@
 #include "interface.hpp"
-#include "engine/sr_impl.hpp"
 #include "logger/logger.hpp"
 
 Interface::Interface(Client *client_) : client(client_){
@@ -35,7 +34,26 @@ Interface::Interface(Client *client_) : client(client_){
 
     server = new server_package();
 
+    ms_f1 = SDL_GetTicks();
 
+    ImVec2 window_size = GetWindowSize();
+    buffers = new sr::internal_buffer_object(sr::ivec2((int)window_size.x, (int)window_size.y));
+
+    Cube.LoadFile("./assets/aircraft.obj");
+
+    light.x = -1;
+    light.y = -0.75;
+    light.z = -0.5;
+
+    Cube.position.x = 0;
+    Cube.position.y = 0;
+    Cube.position.z = 5;
+
+    Cube.size.x = 0.4;
+    Cube.size.y = 0.4;
+    Cube.size.z = 0.4;
+
+    Cube.color = {255, 100, 50};
 }
 
 Interface::~Interface(){
@@ -65,34 +83,20 @@ bool Interface::frame(){
             return 0;
         if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_CLOSE && event.window.windowID == SDL_GetWindowID(window))
             return 0;
+        if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_RESIZED && event.window.windowID == SDL_GetWindowID(window)){
+            ImVec2 window_size = GetWindowSize();
+            buffers->update_framebuffer_size(sr::ivec2((int)window_size.x, (int)window_size.y));
+        }
     }
 
-    sr::mesh Cube;
-    sr::player_t Camera = {0,0,0,0,0};
-    sr::vec3 light;
 
-    Cube.LoadFile("./assets/sphere.obj", false);
-
-    light.x = -1;
-    light.y = -0.75;
-    light.z = -0.5;
-
-    Cube.position.x = 0;
-    Cube.position.y = 0;
-    Cube.position.z = 5;
-
-    Cube.size.x = 1;
-    Cube.size.y = 1;
-    Cube.size.z = 1;
-
-    Cube.color = {255, 100, 50};
 
     ImVec2 window_size = GetWindowSize();
 
     float FOV = 60;
     float Zfar = 1000;
     float Znear = 0.1;
-    sr::mat4x4 Projection_Matrix = sr::Matrix_Projection((int)window_size.x, (int)window_size.y, FOV, Zfar, Znear);
+    sr::mat4x4 Projection_Matrix = sr::Matrix_Projection(sr::ivec2((int)window_size.x, (int)window_size.y), FOV, Zfar, Znear);
     float *pDepthBuffer = new float[(int)window_size.x * (int)window_size.y];
 
     std::function<void(sr::ivec2 pixel, sr::color color)> setpixel = [&](sr::ivec2 pixel, sr::color color){
@@ -106,7 +110,7 @@ bool Interface::frame(){
     ImGui::NewFrame();
 
     //get data from client thread
-    debug_data debug = client->GetDebug();
+    /*debug_data debug = client->GetDebug();
     IPaddress address = client->GetIP();
     server = client->s_package();
 
@@ -144,10 +148,9 @@ bool Interface::frame(){
         ImGui::SameLine();
 
         //should be safe
-        /*
-        reading without using any mutex keeps memory coherency,
-        but may have non coherent results
-        */
+        //reading without using any mutex keeps memory coherency,
+        //but may have non coherent results
+
         ImGui::InputText(client->data->c_package->name, input_name, IM_ARRAYSIZE(input_name));
 
         ImGui::SameLine();
@@ -174,10 +177,24 @@ bool Interface::frame(){
         ImGui::EndChild();
 
         ImGui::End();
+    }*/
+
+
+    {
+        ImGuiWindowFlags flags = 0;
+        flags |= ImGuiWindowFlags_NoResize;
+        ImGui::Begin("Debug profile", NULL, flags);
+
+        ms_f2 = SDL_GetTicks();
+
+        ImGui::Text("frame ms: %i", ms_f2 - ms_f1);
+        ImGui::Text("frame fps: %f", 1000.0f / (float)(ms_f2 - ms_f1));
+
+        ms_f1 = ms_f2;
+
+        ImGui::End();
     }
 
-    bool open;
-    ImGui::ShowDemoWindow(&open);
     
 
     // Rendering
@@ -199,15 +216,15 @@ bool Interface::frame(){
     Cube.color.g = r2 > 255 ? (510 - r2) : r2;
     Cube.color.b = r3 > 255 ? (510 - r3) : r3;
 
-    int mouse_x, mouse_y;
+    /*int mouse_x, mouse_y;
     SDL_GetMouseState(&mouse_x, &mouse_y);
 
     Cube.position.x = tanf(sr::degToRad((((float)mouse_x - window_size.x/2)/window_size.x) * FOV)) * Cube.position.z;
-    Cube.position.y = tanf(sr::degToRad((((float)mouse_y - window_size.y/2)/window_size.y) * FOV)) * Cube.position.z;
+    Cube.position.y = tanf(sr::degToRad((((float)mouse_y - window_size.y/2)/window_size.y) * FOV)) * Cube.position.z;*/
 
-    std::vector<sr::mesh> mesh_collection;
-    mesh_collection.push_back(Cube);
-    sr::Render(setpixel, mesh_collection, Projection_Matrix, Camera, pDepthBuffer, light, (int)window_size.x, (int)window_size.y, true);
+    std::vector<sr::mesh*> mesh_collection;
+    mesh_collection.push_back(&Cube);
+    sr::Render(setpixel, mesh_collection, Projection_Matrix, Camera, buffers, light, sr::ivec2((int)window_size.x, (int)window_size.y), true);
     
 
     ImGui_ImplSDLRenderer_RenderDrawData(ImGui::GetDrawData());
