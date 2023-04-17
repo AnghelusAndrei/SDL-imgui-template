@@ -1,7 +1,10 @@
 #include "sr_core.hpp"
 #include <sstream>
 
-
+template <typename T> T CLAMP(const T& value, const T& low, const T& high) 
+{
+  return value < low ? low : (value > high ? high : value); 
+}
 
 //-----------------------------------------------------------------------------
 // [SECTION] Utils
@@ -44,9 +47,11 @@ sr::vec3::vec3() : x(0.0f), y(.0f), z(0.0f), w(1.0f){}
 sr::vec3::vec3(float x_, float y_, float z_) : x(x_), y(y_), z(z_){}
 sr::ivec2::ivec2() : x(0), y(0){}
 sr::ivec2::ivec2(int x_, int y_) : x(x_), y(y_){}
-sr::color::color() : r(0), g(0), b(0){}
-sr::color::color(int r_, int g_, int b_) : r(r_), g(g_), b(b_){}
-sr::color::color(float r_, float g_, float b_) : r((int)r_), g((int)g_), b((int)b_){}
+sr::colorRGB::colorRGB() : r(0), g(0), b(0){}
+sr::colorRGB::colorRGB(int r_, int g_, int b_) : r(r_), g(g_), b(b_){}
+sr::colorRGB::colorRGB(float r_, float g_, float b_) : r((int)r_), g((int)g_), b((int)b_){}
+
+sr::mesh::mesh() : texture(NULL){}
 
 uint8_t sr::LZ(int x){
     int z = x;
@@ -599,10 +604,9 @@ sr::vec3 sr::Interpolate_Normal_i(sr::ivec2 p[3], sr::vec3 n[3], sr::ivec2 fp){
     sr::vec3 normal;
 
     float area = Triangle_Area_i(p);
-    if(area == 0.0f)return n[0];
+    if(area == 0.0f) return n[0];
     sr::ivec2 a1v[3] = {fp,p[1],p[2]};
     sr::ivec2 a2v[3] = {p[0],fp,p[2]};
-    sr::ivec2 a3v[3] = {p[0],p[1],fp};
     float a1 = Triangle_Area_i(a1v)/area;
     float a2 = Triangle_Area_i(a2v)/area;
     float a3 = 1 - a1 - a2;
@@ -624,7 +628,6 @@ sr::vec3 sr::Interpolate_Normal(sr::vec3 p[3], sr::vec3 n[3], sr::vec3 fp){
     if(area == 0.0f)return n[0];
     sr::vec3 a1v[3] = {fp,p[1],p[2]};
     sr::vec3 a2v[3] = {p[0],fp,p[2]};
-    sr::vec3 a3v[3] = {p[0],p[1],fp};
     float a1 = Triangle_Area(a1v)/area;
     float a2 = Triangle_Area(a2v)/area;
     float a3 = 1 - a1 - a2;
@@ -646,7 +649,6 @@ float sr::Interpolate_Depth(sr::ivec2 p[3], float d[3], sr::ivec2 fp){
     if(area == 0.0f)return d[0];
     sr::ivec2 a1v[3] = {fp,p[1],p[2]};
     sr::ivec2 a2v[3] = {p[0],fp,p[2]};
-    sr::ivec2 a3v[3] = {p[0],p[1],fp};
     float a1 = Triangle_Area_i(a1v)/area;
     float a2 = Triangle_Area_i(a2v)/area;
     float a3 = 1 - a1 - a2;
@@ -663,7 +665,6 @@ sr::ivec2 sr::Interpolate_TextureCoords(sr::ivec2 p[3], sr::ivec2 t[3], sr::ivec
     if(area == 0.0f)return t[0];
     sr::ivec2 a1v[3] = {fp,p[1],p[2]};
     sr::ivec2 a2v[3] = {p[0],fp,p[2]};
-    sr::ivec2 a3v[3] = {p[0],p[1],fp};
     float a1 = Triangle_Area_i(a1v)/area;
     float a2 = Triangle_Area_i(a2v)/area;
     float a3 = 1 - a1 - a2;
@@ -678,24 +679,23 @@ sr::ivec2 sr::Interpolate_TextureCoords(sr::ivec2 p[3], sr::ivec2 t[3], sr::ivec
     return texture_c;
 }
 
-sr::color sr::Interpolate_Color(sr::ivec2 p[3], sr::color c[3], sr::ivec2 fp){
-    sr::color color;
+sr::colorRGB sr::Interpolate_colorRGB(sr::ivec2 p[3], sr::colorRGB c[3], sr::ivec2 fp){
+    sr::colorRGB color;
 
     float area = Triangle_Area_i(p);
     if(area == 0.0f)return c[0];
     sr::ivec2 a1v[3] = {fp,p[1],p[2]};
     sr::ivec2 a2v[3] = {p[0],fp,p[2]};
-    sr::ivec2 a3v[3] = {p[0],p[1],fp};
     float a1 = Triangle_Area_i(a1v)/area;
     float a2 = Triangle_Area_i(a2v)/area;
     float a3 = 1 - a1 - a2;
 
-    sr::color x = sr::color(c[0].r * a1, c[0].g * a1, c[0].b * a1);
-    sr::color u = sr::color(c[1].r * a1, c[1].g * a1, c[1].b * a1);
-    sr::color v = sr::color(c[2].r * a1, c[2].g * a1, c[2].b * a1);
-    sr::color y = sr::color(u.r + v.r, u.g + v.g, u.b + v.b);
+    sr::colorRGB x = sr::colorRGB(c[0].r * a1, c[0].g * a1, c[0].b * a1);
+    sr::colorRGB u = sr::colorRGB(c[1].r * a1, c[1].g * a1, c[1].b * a1);
+    sr::colorRGB v = sr::colorRGB(c[2].r * a1, c[2].g * a1, c[2].b * a1);
+    sr::colorRGB y = sr::colorRGB(u.r + v.r, u.g + v.g, u.b + v.b);
 
-    color = sr::color(x.r + y.r, x.g + y.g, x.b + y.b);
+    color = sr::colorRGB(x.r + y.r, x.g + y.g, x.b + y.b);
 
     return color;
 }
@@ -1065,7 +1065,7 @@ void sr::bresanham(int x1, int y1, int x2, int y2, std::function<void(int, int)>
     }
 }
 
-void sr::Raster(sr::ivec2 p[3], float depth[3], std::function<void(sr::ivec2, float)> pixel, sr::internal_buffer_object *buffers, sr::ivec2 framebuffer_size){
+void sr::Raster(sr::ivec2 p[3], float depth[3], std::function<void(sr::ivec2, float, sr::vec3)> pixel, sr::internal_buffer_object *buffers, sr::ivec2 framebuffer_size){
 
     int y_min_l = framebuffer_size.y-1, y_max_l = 0;
     int *y_min = &y_min_l, *y_max = &y_max_l;
@@ -1104,7 +1104,7 @@ void sr::Raster(sr::ivec2 p[3], float depth[3], std::function<void(sr::ivec2, fl
                 d = depth[0];
 
                 if(d > buffers->depth_buffer[y * framebuffer_size.x + i]){
-                    pixel(sr::ivec2(i, y), d);
+                    pixel(sr::ivec2(i, y), d, sr::vec3(1,0,0));
                     buffers->depth_buffer[y * framebuffer_size.x + i] = d;
                 }
 
@@ -1112,15 +1112,16 @@ void sr::Raster(sr::ivec2 p[3], float depth[3], std::function<void(sr::ivec2, fl
             }
             sr::ivec2 a1v[3] = {sr::ivec2(i, y),p[1],p[2]};
             sr::ivec2 a2v[3] = {p[0],sr::ivec2(i, y),p[2]};
-            sr::ivec2 a3v[3] = {p[0],p[1],sr::ivec2(i, y)};
             float a1 = Triangle_Area_i(a1v)/area;
             float a2 = Triangle_Area_i(a2v)/area;
             float a3 = 1 - a1 - a2;
 
+            sr::vec3 barycentric_coords = sr::vec3(a1,a2,a3);
+
             d = depth[0] * a1 + depth[1] * a2 + depth[2] * a3;
 
             if(d > buffers->depth_buffer[y * framebuffer_size.x + i]){
-                pixel(sr::ivec2(i, y), d);
+                pixel(sr::ivec2(i, y), d, barycentric_coords);
                 buffers->depth_buffer[y * framebuffer_size.x + i] = d;
             }
         }
@@ -1129,32 +1130,37 @@ void sr::Raster(sr::ivec2 p[3], float depth[3], std::function<void(sr::ivec2, fl
     }
 }
 
-void sr::Raster_NonInterpolated(std::function<void(sr::ivec2, sr::color)> setpixel, sr::ivec2 p[3], float depth[3], sr::internal_buffer_object *buffers, sr::ivec2 framebuffer_size, sr::color color){
-    std::function<void(sr::ivec2 pixel, float d)> f = [&color, &setpixel](sr::ivec2 pixel, float d)
+void sr::Raster_NonInterpolated(std::function<void(sr::ivec2, sr::colorRGB)> setpixel, sr::ivec2 p[3], float depth[3], sr::internal_buffer_object *buffers, sr::ivec2 framebuffer_size, sr::colorRGB color){
+    std::function<void(sr::ivec2 pixel, float d, sr::vec3 barycentric_coords)> f = [&color, &setpixel](sr::ivec2 pixel, float d, sr::vec3 barycentric_coords)
     {
         setpixel(pixel, color);
     };
 
     Raster(p, depth, f, buffers, framebuffer_size);
 }
-void sr::Raster_ColorInterpolated(std::function<void(sr::ivec2, sr::color)> setpixel, sr::ivec2 p[3], float depth[3], sr::internal_buffer_object *buffers, sr::ivec2 framebuffer_size, sr::color colors[3]){
-    std::function<void(sr::ivec2 pixel, float d)> f = [&colors, &setpixel, p](sr::ivec2 pixel, float d)
+void sr::Raster_colorRGBInterpolated(std::function<void(sr::ivec2, sr::colorRGB)> setpixel, sr::ivec2 p[3], float depth[3], sr::internal_buffer_object *buffers, sr::ivec2 framebuffer_size, sr::colorRGB colors[3]){
+    std::function<void(sr::ivec2 pixel, float d, sr::vec3 barycentric_coords)> f = [colors, &setpixel, p](sr::ivec2 pixel, float d, sr::vec3 barycentric_coords)
     {
-        sr::color color = Interpolate_Color(p, colors, pixel);
+        sr::colorRGB color = Interpolate_colorRGB(p, colors, pixel);
         setpixel(pixel, color);
     };
 
     Raster(p, depth, f, buffers, framebuffer_size);
 }
-void sr::Raster_NormalInterpolated(std::function<void(sr::ivec2, sr::color)> setpixel, sr::ivec2 p[3], float depth[3], sr::internal_buffer_object *buffers, sr::ivec2 framebuffer_size, sr::color color, sr::vec3 normals[3], sr::vec3 light){
-    std::function<void(sr::ivec2 pixel, float d)> f = [&color, &setpixel, p, normals, &light](sr::ivec2 pixel, float d)
+void sr::Raster_NormalInterpolated(std::function<void(sr::ivec2, sr::colorRGB)> setpixel, sr::ivec2 p[3], float depth[3], sr::internal_buffer_object *buffers, sr::ivec2 framebuffer_size, sr::colorRGB color, sr::vec3 normals[3], sr::vec3 light){
+    std::function<void(sr::ivec2 pixel, float d, sr::vec3 barycentric_coords)> f = [&color, &setpixel, p, normals, &light](sr::ivec2 pixel, float d, sr::vec3 barycentric_coords)
     {
-        sr::vec3 normal = Interpolate_Normal_i(p, normals, pixel);
+        sr::vec3 normal = sr::vec3(
+            normals[0].x * barycentric_coords.x + normals[1].x * barycentric_coords.y + normals[2].x * barycentric_coords.z,
+            normals[0].y * barycentric_coords.x + normals[1].y * barycentric_coords.y + normals[2].y * barycentric_coords.z,
+            normals[0].z * barycentric_coords.x + normals[1].z * barycentric_coords.y + normals[2].z * barycentric_coords.z
+        );
+
         normal = Vector_Length(normal) != 0 ? Vector_Normalise(normal) : sr::vec3(0,0,0);
         float light_dp = Vector_DotProduct(normal, light);
         const uint8_t min_light_value = 5;
         float light_value = (float)(((light_dp + 1)/2)*(255 - min_light_value) + min_light_value)/255;
-        sr::color shade = sr::color(
+        sr::colorRGB shade = sr::colorRGB(
             (uint8_t)((float)color.r * light_value),
             (uint8_t)((float)color.g * light_value),
             (uint8_t)((float)color.b * light_value)
@@ -1164,16 +1170,151 @@ void sr::Raster_NormalInterpolated(std::function<void(sr::ivec2, sr::color)> set
 
     Raster(p, depth, f, buffers, framebuffer_size);
 }
-void sr::Raster_ColorAndNormalInterpolated(std::function<void(sr::ivec2, sr::color)> setpixel, sr::ivec2 p[3], float depth[3], sr::internal_buffer_object *buffers, sr::ivec2 framebuffer_size, sr::color colors[3], sr::vec3 normals[3], sr::vec3 light){
-    std::function<void(sr::ivec2 pixel, float d)> f = [&colors, &setpixel, p, normals, &light](sr::ivec2 pixel, float d)
+void sr::Raster_colorRGBAndNormalInterpolated(std::function<void(sr::ivec2, sr::colorRGB)> setpixel, sr::ivec2 p[3], float depth[3], sr::internal_buffer_object *buffers, sr::ivec2 framebuffer_size, sr::colorRGB colors[3], sr::vec3 normals[3], sr::vec3 light){
+    std::function<void(sr::ivec2 pixel, float d, sr::vec3 barycentric_coords)> f = [colors, &setpixel, p, normals, &light](sr::ivec2 pixel, float d, sr::vec3 barycentric_coords)
     {
-        sr::vec3 normal = Interpolate_Normal_i(p, normals, pixel);
+        sr::vec3 normal = sr::vec3(
+            normals[0].x * barycentric_coords.x + normals[1].x * barycentric_coords.y + normals[2].x * barycentric_coords.z,
+            normals[0].y * barycentric_coords.x + normals[1].y * barycentric_coords.y + normals[2].y * barycentric_coords.z,
+            normals[0].z * barycentric_coords.x + normals[1].z * barycentric_coords.y + normals[2].z * barycentric_coords.z
+        );
+        sr::colorRGB color = sr::colorRGB(
+            (float)colors[0].r * barycentric_coords.x + (float)colors[1].r * barycentric_coords.y + (float)colors[2].r * barycentric_coords.z,
+            (float)colors[0].g * barycentric_coords.x + (float)colors[1].g * barycentric_coords.y + (float)colors[2].g * barycentric_coords.z,
+            (float)colors[0].b * barycentric_coords.x + (float)colors[1].b * barycentric_coords.y + (float)colors[2].b * barycentric_coords.z
+        );
+
         normal = Vector_Length(normal) != 0 ? Vector_Normalise(normal) : sr::vec3(0,0,0);
-        sr::color color = Interpolate_Color(p, colors, pixel);
         float light_dp = Vector_DotProduct(normal, light);
         const uint8_t min_light_value = 5;
         float light_value = (float)(((light_dp + 1)/2)*(255 - min_light_value) + min_light_value)/255;
-        sr::color shade = sr::color(
+        sr::colorRGB shade = sr::colorRGB(
+            (uint8_t)((float)color.r * light_value),
+            (uint8_t)((float)color.g * light_value),
+            (uint8_t)((float)color.b * light_value)
+        );
+        setpixel(pixel, shade);
+    };
+
+    Raster(p, depth, f, buffers, framebuffer_size);
+}
+
+void sr::Raster_TextureInterpolated(std::function<void(sr::ivec2, sr::colorRGB)> setpixel, sr::ivec2 p[3], float depth[3], sr::colorRGB color, sr::internal_buffer_object *buffers, sr::ivec2 framebuffer_size, sr::vec3 tex[3], sr::colorRGB *texture, sr::ivec2 texture_size){
+    std::function<void(sr::ivec2 pixel, float d, sr::vec3 barycentric_coords)> f = [&setpixel, tex, texture, &color, &texture_size](sr::ivec2 pixel, float d, sr::vec3 barycentric_coords)
+    {
+        sr::vec3 tex_c = sr::vec3(
+            tex[0].x * barycentric_coords.x + tex[1].x * barycentric_coords.y + tex[2].x * barycentric_coords.z,
+            tex[0].y * barycentric_coords.x + tex[1].y * barycentric_coords.y + tex[2].y * barycentric_coords.z,
+            tex[0].z * barycentric_coords.x + tex[1].z * barycentric_coords.y + tex[2].z * barycentric_coords.z
+        );
+
+        sr::ivec2 texture_coords = sr::ivec2(
+            CLAMP((int)(tex_c.x * (float)(texture_size.x)), 0, texture_size.x-1),
+            CLAMP((int)(tex_c.y * (float)(texture_size.y)), 0, texture_size.y-1)
+        );
+        
+        sr::colorRGB texture_color = sr::colorRGB(
+            texture[texture_coords.y * texture_size.x + texture_coords.x].r,
+            texture[texture_coords.y * texture_size.x + texture_coords.x].g,
+            texture[texture_coords.y * texture_size.x + texture_coords.x].b
+        );
+
+        color = sr::colorRGB(
+            texture_color.r,
+            texture_color.g,
+            texture_color.b
+        );
+
+        setpixel(pixel, color);
+    };
+
+    Raster(p, depth, f, buffers, framebuffer_size);
+}
+
+void sr::Raster_TextureAndNormalInterpolated(std::function<void(sr::ivec2, sr::colorRGB)> setpixel, sr::ivec2 p[3], float depth[3], sr::colorRGB color, sr::internal_buffer_object *buffers, sr::ivec2 framebuffer_size, sr::vec3 tex[3], sr::vec3 normals[3], sr::colorRGB *texture, sr::ivec2 texture_size, sr::vec3 light){
+    std::function<void(sr::ivec2 pixel, float d, sr::vec3 barycentric_coords)> f = [&setpixel, tex, texture, &color, &texture_size, normals, &light](sr::ivec2 pixel, float d, sr::vec3 barycentric_coords)
+    {
+        sr::vec3 tex_c = sr::vec3(
+            tex[0].x * barycentric_coords.x + tex[1].x * barycentric_coords.y + tex[2].x * barycentric_coords.z,
+            tex[0].y * barycentric_coords.x + tex[1].y * barycentric_coords.y + tex[2].y * barycentric_coords.z,
+            tex[0].z * barycentric_coords.x + tex[1].z * barycentric_coords.y + tex[2].z * barycentric_coords.z
+        );
+
+        sr::ivec2 texture_coords = sr::ivec2(
+            CLAMP((int)(tex_c.x * (float)(texture_size.x)), 0, texture_size.x-1),
+            CLAMP((int)(tex_c.y * (float)(texture_size.y)), 0, texture_size.y-1)
+        );
+        
+        sr::colorRGB texture_color = sr::colorRGB(
+            texture[texture_coords.y * texture_size.x + texture_coords.x].r,
+            texture[texture_coords.y * texture_size.x + texture_coords.x].g,
+            texture[texture_coords.y * texture_size.x + texture_coords.x].b
+        );
+
+        color = texture_color;
+
+
+        sr::vec3 normal = sr::vec3(
+            normals[0].x * barycentric_coords.x + normals[1].x * barycentric_coords.y + normals[2].x * barycentric_coords.z,
+            normals[0].y * barycentric_coords.x + normals[1].y * barycentric_coords.y + normals[2].y * barycentric_coords.z,
+            normals[0].z * barycentric_coords.x + normals[1].z * barycentric_coords.y + normals[2].z * barycentric_coords.z
+        );
+
+        normal = Vector_Length(normal) != 0 ? Vector_Normalise(normal) : sr::vec3(0,0,0);
+        float light_dp = Vector_DotProduct(normal, light);
+        const uint8_t min_light_value = 5;
+        float light_value = (float)(((light_dp + 1)/2)*(255 - min_light_value) + min_light_value)/255;
+        sr::colorRGB shade = sr::colorRGB(
+            (uint8_t)((float)color.r * light_value),
+            (uint8_t)((float)color.g * light_value),
+            (uint8_t)((float)color.b * light_value)
+        );
+        setpixel(pixel, shade);
+    };
+
+    Raster(p, depth, f, buffers, framebuffer_size);
+}
+
+void sr::Raster_FullyInterpolated(std::function<void(sr::ivec2, sr::colorRGB)> setpixel, sr::ivec2 p[3], float depth[3], sr::internal_buffer_object *buffers, sr::ivec2 framebuffer_size, sr::vec3 tex[3], sr::vec3 normals[3], sr::colorRGB colors[3], sr::colorRGB *texture, sr::ivec2 texture_size, sr::vec3 light){
+    std::function<void(sr::ivec2 pixel, float d, sr::vec3 barycentric_coords)> f = [&setpixel, tex, texture, colors, &texture_size, normals, &light](sr::ivec2 pixel, float d, sr::vec3 barycentric_coords)
+    {
+        sr::colorRGB color = sr::colorRGB(
+            (float)colors[0].r * barycentric_coords.x + (float)colors[1].r * barycentric_coords.y + (float)colors[2].r * barycentric_coords.z,
+            (float)colors[0].g * barycentric_coords.x + (float)colors[1].g * barycentric_coords.y + (float)colors[2].g * barycentric_coords.z,
+            (float)colors[0].b * barycentric_coords.x + (float)colors[1].b * barycentric_coords.y + (float)colors[2].b * barycentric_coords.z
+        );
+
+        sr::vec3 tex_c = sr::vec3(
+            tex[0].x * barycentric_coords.x + tex[1].x * barycentric_coords.y + tex[2].x * barycentric_coords.z,
+            tex[0].y * barycentric_coords.x + tex[1].y * barycentric_coords.y + tex[2].y * barycentric_coords.z,
+            tex[0].z * barycentric_coords.x + tex[1].z * barycentric_coords.y + tex[2].z * barycentric_coords.z
+        );
+
+        sr::ivec2 texture_coords = sr::ivec2(
+            CLAMP((int)(tex_c.x * (float)(texture_size.x)), 0, texture_size.x-1),
+            CLAMP((int)(tex_c.y * (float)(texture_size.y)), 0, texture_size.y-1)
+        );
+        
+        sr::colorRGB texture_color = sr::colorRGB(
+            texture[texture_coords.y * texture_size.x + texture_coords.x].r,
+            texture[texture_coords.y * texture_size.x + texture_coords.x].g,
+            texture[texture_coords.y * texture_size.x + texture_coords.x].b
+        );
+
+        color = texture_color;
+
+
+        sr::vec3 normal = sr::vec3(
+            normals[0].x * barycentric_coords.x + normals[1].x * barycentric_coords.y + normals[2].x * barycentric_coords.z,
+            normals[0].y * barycentric_coords.x + normals[1].y * barycentric_coords.y + normals[2].y * barycentric_coords.z,
+            normals[0].z * barycentric_coords.x + normals[1].z * barycentric_coords.y + normals[2].z * barycentric_coords.z
+        );
+
+        normal = Vector_Length(normal) != 0 ? Vector_Normalise(normal) : sr::vec3(0,0,0);
+        float light_dp = Vector_DotProduct(normal, light);
+        const uint8_t min_light_value = 5;
+        float light_value = (float)(((light_dp + 1)/2)*(255 - min_light_value) + min_light_value)/255;
+        sr::colorRGB shade = sr::colorRGB(
             (uint8_t)((float)color.r * light_value),
             (uint8_t)((float)color.g * light_value),
             (uint8_t)((float)color.b * light_value)
@@ -1190,7 +1331,7 @@ void sr::Raster_ColorAndNormalInterpolated(std::function<void(sr::ivec2, sr::col
 //-----------------------------------------------------------------------------
 
 
-void sr::Render(std::function<void(sr::ivec2, sr::color)> setpixel, std::vector<sr::mesh*> mesh_collection, sr::mat4x4 Projection_Matrix, sr::player_t Camera, sr::internal_buffer_object *buffers, sr::vec3 light, sr::ivec2 framebuffer_size, bool phong){
+void sr::Render(std::function<void(sr::ivec2, sr::colorRGB)> setpixel, std::vector<sr::mesh*> mesh_collection, sr::mat4x4 Projection_Matrix, sr::player_t Camera, sr::internal_buffer_object *buffers, sr::vec3 light, sr::ivec2 framebuffer_size, bool phong){
 
     buffers->update_frame(framebuffer_size);
 
@@ -1312,14 +1453,6 @@ void sr::Render(std::function<void(sr::ivec2, sr::color)> setpixel, std::vector<
                         projection.t[1].z = clipped[n].t[1].z;
                         projection.t[2].z = clipped[n].t[2].z;
 
-                        projection.t[0].x = projection.t[0].x / projection.p[0].w;
-                        projection.t[1].x = projection.t[1].x / projection.p[1].w;
-                        projection.t[2].x = projection.t[2].x / projection.p[2].w;
-
-                        projection.t[0].y = projection.t[0].y / projection.p[0].w;
-                        projection.t[1].y = projection.t[1].y / projection.p[1].w;
-                        projection.t[2].y = projection.t[2].y / projection.p[2].w;
-
                         projection.t[0].z = 1/projection.p[0].w;
                         projection.t[1].z = 1/projection.p[1].w;
                         projection.t[2].z = 1/projection.p[2].w;
@@ -1349,7 +1482,7 @@ void sr::Render(std::function<void(sr::ivec2, sr::color)> setpixel, std::vector<
                         projection.p[1].x += (framebuffer_size.x-framebuffer_size.y)/2;
                         projection.p[2].x += (framebuffer_size.x-framebuffer_size.y)/2;
 
-                        projection.c = (sr::color){shade, shade, shade};
+                        projection.c = (sr::colorRGB){shade, shade, shade};
 
 
 
@@ -1397,9 +1530,13 @@ void sr::Render(std::function<void(sr::ivec2, sr::color)> setpixel, std::vector<
                                 t->t[2].z
                             };
 
-                            sr::color color = sr::color( LZ(t->c.r + mesh.color.r - 255), LZ(t->c.g + mesh.color.g - 255), LZ(t->c.b + mesh.color.b - 255));
+                            sr::colorRGB color = sr::colorRGB( LZ(t->c.r + mesh.color.r - 255), LZ(t->c.g + mesh.color.g - 255), LZ(t->c.b + mesh.color.b - 255));
 
-                            Raster_NonInterpolated(setpixel, p, d, buffers, framebuffer_size, color);
+                            if(mesh.texture == NULL){
+                                Raster_NonInterpolated(setpixel, p, d, buffers, framebuffer_size, color);
+                            }else{
+                                Raster_TextureInterpolated(setpixel, p, d, color, buffers, framebuffer_size, t->t, mesh.texture, mesh.texture_size);
+                            }
                         }
                     }
                 }
@@ -1459,14 +1596,6 @@ void sr::Render(std::function<void(sr::ivec2, sr::color)> setpixel, std::vector<
                         projection.t[0].z = clipped[n].t[0].z;
                         projection.t[1].z = clipped[n].t[1].z;
                         projection.t[2].z = clipped[n].t[2].z;
-
-                        projection.t[0].x = projection.t[0].x / projection.p[0].w;
-                        projection.t[1].x = projection.t[1].x / projection.p[1].w;
-                        projection.t[2].x = projection.t[2].x / projection.p[2].w;
-
-                        projection.t[0].y = projection.t[0].y / projection.p[0].w;
-                        projection.t[1].y = projection.t[1].y / projection.p[1].w;
-                        projection.t[2].y = projection.t[2].y / projection.p[2].w;
 
                         projection.t[0].z = 1/projection.p[0].w;
                         projection.t[1].z = 1/projection.p[1].w;
@@ -1547,7 +1676,11 @@ void sr::Render(std::function<void(sr::ivec2, sr::color)> setpixel, std::vector<
                             t->n[1] = Vector_Length(t->p[1]) != 0 ? Vector_Normalise(t->n[1]) : sr::vec3(0,0,0);
                             t->n[2] = Vector_Length(t->p[2]) != 0 ? Vector_Normalise(t->n[2]) : sr::vec3(0,0,0);
 
-                            Raster_NormalInterpolated(setpixel, p, d, buffers, framebuffer_size, mesh.color, t->n, light);
+                            if(mesh.texture == NULL){
+                                Raster_NormalInterpolated(setpixel, p, d, buffers, framebuffer_size, mesh.color, t->n, light);
+                            }else{
+                                Raster_TextureAndNormalInterpolated(setpixel, p, d, mesh.color, buffers, framebuffer_size, t->t, t->n, mesh.texture, mesh.texture_size, light);
+                            }
                         }
                     }
                 }

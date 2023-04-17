@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include "engine/sr_core.hpp"
 #include "SDL.h"
+#include "SDL_image.h"
 
 
 #if !SDL_VERSION_ATLEAST(2,0,17)
@@ -15,6 +16,17 @@ ImVec2 GetWindowSize(SDL_Window *window){
     std::pair<int, int> size;
     SDL_GetWindowSize(window, &size.first, &size.second);
     return ImVec2(size.first, size.second);
+}
+
+
+sr::ivec2 getsize(SDL_Texture *texture) {
+    sr::ivec2 size;
+    SDL_QueryTexture(texture, NULL, NULL, &size.x, &size.y);
+    return size;
+}
+
+uint32_t formatRGB(sr::colorRGB color){
+    return color.b << 24 | color.r << 8 | color.g << 16;
 }
 
 // Main code
@@ -69,25 +81,49 @@ int main(int, char**)
     ImVec2 window_size = GetWindowSize(window);
     buffers = new sr::internal_buffer_object(sr::ivec2((int)window_size.x, (int)window_size.y));
 
-    Cube.LoadFile("./assets/cow.obj");
+    Cube.LoadFile("./assets/capsule.obj");
+    SDL_Surface *obj_surface = IMG_Load("./assets/capsule.jpg");
 
+    Cube.texture = new sr::colorRGB[obj_surface->h * obj_surface->w];
+    Cube.texture_size = sr::ivec2(obj_surface->w, obj_surface->h);
+    for(int y = 0; y < obj_surface->h; y++){
+        for(int x = 0; x < obj_surface->w; x++){
+            Cube.texture[y * obj_surface->w + x] = sr::colorRGB(
+                ((char*)obj_surface->pixels)[obj_surface->format->BytesPerPixel * (y * obj_surface -> w + x) + 2],
+                ((char*)obj_surface->pixels)[obj_surface->format->BytesPerPixel * (y * obj_surface -> w + x) + 1],
+                ((char*)obj_surface->pixels)[obj_surface->format->BytesPerPixel * (y * obj_surface -> w + x) + 0]
+            );
+        }
+    }
+    
     light.x = -1;
     light.y = -0.75;
     light.z = -0.5;
 
+    sr::vec3 base_light = sr::vec3(-1.0f, -0.75f, -0.5f);
+
     Cube.position.x = 0;
     Cube.position.y = 0;
-    Cube.position.z = 5;
+    Cube.position.z = 1.3;
 
-    Cube.size.x = 0.5;
-    Cube.size.y = 0.5;
-    Cube.size.z = 0.5;
+    Cube.size.x = 0.4;
+    Cube.size.y = 0.4;
+    Cube.size.z = 0.4;
 
     Cube.color = {255, 100, 50};
+
+
+    SDL_Texture* texture_buffer = SDL_CreateTexture(renderer, 
+                            SDL_PIXELFORMAT_BGRA8888,
+                            SDL_TEXTUREACCESS_STREAMING, 
+                            window_size.x,
+                            window_size.y);
+
+    int *pixel_buffer;
+    int pitch;
     
-    std::function<void(sr::ivec2 pixel, sr::color color)> setpixel = [renderer](sr::ivec2 pixel, sr::color color){
-        SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, 255);
-        SDL_RenderDrawPoint(renderer, pixel.x, pixel.y);
+    std::function<void(sr::ivec2 pixel, sr::colorRGB color)> setpixel = [&window_size, &pixel_buffer](sr::ivec2 pixel, sr::colorRGB color){
+        pixel_buffer[pixel.y * (int)window_size.x + pixel.x] = formatRGB(color);
     };
 
     bool done = false;
@@ -102,12 +138,16 @@ int main(int, char**)
             if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_CLOSE && event.window.windowID == SDL_GetWindowID(window))
                 done = true;
             if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_RESIZED && event.window.windowID == SDL_GetWindowID(window)){
-                ImVec2 window_size = GetWindowSize(window);
+                window_size = GetWindowSize(window);
                 buffers->update_framebuffer_size(sr::ivec2((int)window_size.x, (int)window_size.y));
+                SDL_DestroyTexture(texture_buffer);
+                texture_buffer = SDL_CreateTexture(renderer, 
+                            SDL_PIXELFORMAT_BGRA8888,
+                            SDL_TEXTUREACCESS_STREAMING, 
+                            window_size.x,
+                            window_size.y);
             }
         }
-
-        ImVec2 window_size = GetWindowSize(window);
 
         float FOV = 60;
         float Zfar = 1000;
@@ -121,8 +161,7 @@ int main(int, char**)
 
 
         {
-            ImGuiWindowFlags flags = 0;
-            flags |= ImGuiWindowFlags_NoResize;
+            ImGuiWindowFlags flags = ImGuiWindowFlags_AlwaysAutoResize;
             ImGui::Begin("Debug profile", NULL, flags);
 
             ms_f2 = SDL_GetTicks();
@@ -138,8 +177,6 @@ int main(int, char**)
         
         ImGui::Render();
         SDL_RenderSetScale(renderer, io.DisplayFramebufferScale.x, io.DisplayFramebufferScale.y);
-        SDL_SetRenderDrawColor(renderer, (Uint8)(clear_color.x * 255), (Uint8)(clear_color.y * 255), (Uint8)(clear_color.z * 255), (Uint8)(clear_color.w * 255));
-        SDL_RenderClear(renderer);
 
 
         Cube.rotation.x = (float)(SDL_GetTicks()/50);
@@ -154,16 +191,26 @@ int main(int, char**)
         Cube.color.g = r2 > 255 ? (510 - r2) : r2;
         Cube.color.b = r3 > 255 ? (510 - r3) : r3;
 
-        /*int mouse_x, mouse_y;
-        SDL_GetMouseState(&mouse_x, &mouse_y);
-        Cube.position.x = tanf(sr::degToRad((((float)mouse_x - window_size.x/2)/window_size.x) * FOV)) * Cube.position.z;
-        Cube.position.y = tanf(sr::degToRad((((float)mouse_y - window_size.y/2)/window_size.y) * FOV)) * Cube.position.z;*/
+        sr::mat4x4 light_rotation_x = sr::Matrix_RotateX((float)(SDL_GetTicks()/50));
+        sr::mat4x4 light_rotation_y = sr::Matrix_RotateX((float)(SDL_GetTicks()/50));
+        sr::mat4x4 light_rotation_z = sr::Matrix_RotateX((float)(SDL_GetTicks()/50));
+
+        //light = sr::Vector_MultiplyMatrix(base_light, light_rotation);
+        light = sr::Vector_Normalise(light);
 
         std::vector<sr::mesh*> mesh_collection;
         mesh_collection.push_back(&Cube);
-        sr::Render(setpixel, mesh_collection, Projection_Matrix, Camera, buffers, light, sr::ivec2((int)window_size.x, (int)window_size.y), true);
-    
+        SDL_LockTexture(texture_buffer,
+                        NULL,      // NULL means the *whole texture* here.
+                        (void**)&pixel_buffer,
+                        &pitch);
 
+        uint32_t clear_pixel_col = formatRGB(sr::colorRGB(clear_color.x * 255, clear_color.y * 255, clear_color.z * 255));
+        std::fill_n(pixel_buffer, (int)window_size.x*(int)window_size.y, clear_pixel_col);
+        sr::Render(setpixel, mesh_collection, Projection_Matrix, Camera, buffers, light, sr::ivec2((int)window_size.x, (int)window_size.y), true);
+        SDL_UnlockTexture(texture_buffer);
+    
+        SDL_RenderCopy(renderer, texture_buffer, NULL, NULL);
         ImGui_ImplSDLRenderer_RenderDrawData(ImGui::GetDrawData());
         SDL_RenderPresent(renderer);
     }
