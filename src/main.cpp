@@ -66,10 +66,12 @@ int main(int, char**)
 
     bool show_demo_window = true;
     bool show_another_window = false;
-    ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+    ImVec4 clear_color = ImVec4(0.20f, 0.45f, 0.60f, 1.00f);
 
     uint32_t ms_f1;
     uint32_t ms_f2;
+    uint32_t ms_sr1;
+    uint32_t ms_sr2;
 
     sr::internal_buffer_object *buffers;
     sr::mesh Cube;
@@ -81,8 +83,8 @@ int main(int, char**)
     ImVec2 window_size = GetWindowSize(window);
     buffers = new sr::internal_buffer_object(sr::ivec2((int)window_size.x, (int)window_size.y));
 
-    Cube.LoadFile("./assets/capsule.obj");
-    SDL_Surface *obj_surface = IMG_Load("./assets/capsule.jpg");
+    Cube.LoadFile("./assets/teapot.obj");
+    /*SDL_Surface *obj_surface = IMG_Load("./assets/texture.jpg");
 
     Cube.texture = new sr::colorRGB[obj_surface->h * obj_surface->w];
     Cube.texture_size = sr::ivec2(obj_surface->w, obj_surface->h);
@@ -94,23 +96,27 @@ int main(int, char**)
                 ((char*)obj_surface->pixels)[obj_surface->format->BytesPerPixel * (y * obj_surface -> w + x) + 0]
             );
         }
-    }
+    }*/
+
+    std::vector<sr::mesh*> mesh_collection;
+    std::vector<sr::vec3*> light_collection;
+
+    mesh_collection.push_back(&Cube);
+    light_collection.push_back(&light);
     
-    light.x = -1;
-    light.y = -0.75;
-    light.z = -0.5;
+    light.x = 0;
+    light.y = 0;
+    light.z = 0;
 
-    sr::vec3 base_light = sr::vec3(-1.0f, -0.75f, -0.5f);
+    Cube.position.x = 3;
+    Cube.position.y = 1;
+    Cube.position.z = 5.5;
 
-    Cube.position.x = 0;
-    Cube.position.y = 0;
-    Cube.position.z = 1.3;
+    Cube.size.x = 1;
+    Cube.size.y = 1;
+    Cube.size.z = 1;
 
-    Cube.size.x = 0.4;
-    Cube.size.y = 0.4;
-    Cube.size.z = 0.4;
-
-    Cube.color = {255, 100, 50};
+    Cube.color = {255, 50, 50};
 
 
     SDL_Texture* texture_buffer = SDL_CreateTexture(renderer, 
@@ -154,7 +160,6 @@ int main(int, char**)
         float Znear = 0.1;
         sr::mat4x4 Projection_Matrix = sr::Matrix_Projection(sr::ivec2((int)window_size.x, (int)window_size.y), FOV, Zfar, Znear);
 
-
         ImGui_ImplSDLRenderer_NewFrame();
         ImGui_ImplSDL2_NewFrame();
         ImGui::NewFrame();
@@ -167,7 +172,10 @@ int main(int, char**)
             ms_f2 = SDL_GetTicks();
 
             ImGui::Text("frame ms: %i", ms_f2 - ms_f1);
+            ImGui::Text("sr render ms: %i", ms_sr2 - ms_sr1);
+            ImGui::Text("non sr procceses ms: %i", ms_f2 - ms_f1 - (ms_sr2 - ms_sr1));
             ImGui::Text("frame fps: %f", 1000.0f / (float)(ms_f2 - ms_f1));
+            ImGui::Text("sr render fps: %f", 1000.0f / (float)(ms_sr2 - ms_sr1));
 
             ms_f1 = ms_f2;
 
@@ -176,6 +184,7 @@ int main(int, char**)
 
         
         ImGui::Render();
+
         SDL_RenderSetScale(renderer, io.DisplayFramebufferScale.x, io.DisplayFramebufferScale.y);
 
 
@@ -183,23 +192,15 @@ int main(int, char**)
         Cube.rotation.y = (float)(SDL_GetTicks()/50);
         Cube.rotation.z = (float)(SDL_GetTicks()/50);
 
-        int r1 = (SDL_GetTicks()/20)%410 + 50;
-        int r2 = (SDL_GetTicks()/10)%410 + 50;
-        int r3 = (SDL_GetTicks()/25)%410 + 50;
+        int r1 = (SDL_GetTicks()/20)%510;
+        int r2 = (SDL_GetTicks()/10)%510;
+        int r3 = (SDL_GetTicks()/25)%510;
 
         Cube.color.r = r1 > 255 ? (510 - r1) : r1;
         Cube.color.g = r2 > 255 ? (510 - r2) : r2;
         Cube.color.b = r3 > 255 ? (510 - r3) : r3;
 
-        sr::mat4x4 light_rotation_x = sr::Matrix_RotateX((float)(SDL_GetTicks()/50));
-        sr::mat4x4 light_rotation_y = sr::Matrix_RotateX((float)(SDL_GetTicks()/50));
-        sr::mat4x4 light_rotation_z = sr::Matrix_RotateX((float)(SDL_GetTicks()/50));
 
-        //light = sr::Vector_MultiplyMatrix(base_light, light_rotation);
-        light = sr::Vector_Normalise(light);
-
-        std::vector<sr::mesh*> mesh_collection;
-        mesh_collection.push_back(&Cube);
         SDL_LockTexture(texture_buffer,
                         NULL,      // NULL means the *whole texture* here.
                         (void**)&pixel_buffer,
@@ -207,7 +208,11 @@ int main(int, char**)
 
         uint32_t clear_pixel_col = formatRGB(sr::colorRGB(clear_color.x * 255, clear_color.y * 255, clear_color.z * 255));
         std::fill_n(pixel_buffer, (int)window_size.x*(int)window_size.y, clear_pixel_col);
-        sr::Render(setpixel, mesh_collection, Projection_Matrix, Camera, buffers, light, sr::ivec2((int)window_size.x, (int)window_size.y), true);
+
+        ms_sr1 = SDL_GetTicks();
+        sr::Render(setpixel, mesh_collection, Projection_Matrix, Camera, buffers, light_collection, sr::ivec2((int)window_size.x, (int)window_size.y), true);
+        ms_sr2 = SDL_GetTicks();
+
         SDL_UnlockTexture(texture_buffer);
     
         SDL_RenderCopy(renderer, texture_buffer, NULL, NULL);

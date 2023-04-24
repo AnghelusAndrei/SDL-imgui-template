@@ -57,7 +57,7 @@ namespace sr{
 
 	struct triangle
 	{
-		vec3 p[3];
+		vec3 p[3]; 
 		vec3 t[3];
 		colorRGB c;
 		vec3 n[3];
@@ -90,6 +90,7 @@ namespace sr{
 //-----------------------------------------------------------------------------
 
 	uint8_t LZ(int x);
+	colorRGB shadedColor(sr::colorRGB color, sr::vec3 &normal, std::vector<sr::vec3*> light_collection, sr::vec3 point, sr::vec3 &cam_pos);
 	float degToRad(float ang);
 	float radToDeg(float rad);
 
@@ -123,7 +124,6 @@ namespace sr{
 
 	float Triangle_Area(vec3 p[3]);
 	float Triangle_Area_i(ivec2 p[3]);
-	void OrderVertexIndex(vec3 p[4], int v[4]); 
 	int Triangle_ClipAgainstPlane(vec3 plane_p, vec3 plane_n, triangle &in_tri, triangle &out_tri1, triangle &out_tri2);
 	vec3 Interpolate_Normal_i(ivec2 p[3], vec3 n[3], ivec2 fp);
 	vec3 Interpolate_Normal(vec3 p[3], vec3 n[3], vec3 fp);
@@ -134,11 +134,11 @@ namespace sr{
 	void Raster(sr::ivec2 p[3], float depth[3], std::function<void(sr::ivec2, float, sr::vec3)> pixel, sr::internal_buffer_object *buffers, sr::ivec2 framebuffer_size);
 	void Raster_NonInterpolated(std::function<void(sr::ivec2, sr::colorRGB)> setpixel, ivec2 p[3], float depth[3], sr::internal_buffer_object *buffers, sr::ivec2 framebuffer_size, colorRGB color);
 	void Raster_colorRGBInterpolated(std::function<void(sr::ivec2, sr::colorRGB)> setpixel, ivec2 p[3], float depth[3], sr::internal_buffer_object *buffers, sr::ivec2 framebuffer_size, colorRGB colors[3]);
-	void Raster_NormalInterpolated(std::function<void(sr::ivec2, sr::colorRGB)> setpixel, ivec2 p[3], float depth[3], sr::internal_buffer_object *buffers, sr::ivec2 framebuffer_size, colorRGB colorRGB, vec3 normals[3], vec3 light);
-	void Raster_colorRGBAndNormalInterpolated(std::function<void(sr::ivec2, sr::colorRGB)> setpixel, ivec2 p[3], float depth[3], sr::internal_buffer_object *buffers, sr::ivec2 framebuffer_size, colorRGB colors[3], vec3 normals[3], vec3 light);
+	void Raster_NormalInterpolated(std::function<void(sr::ivec2, sr::colorRGB)> setpixel, ivec2 p[3], float depth[3], sr::internal_buffer_object *buffers, sr::ivec2 framebuffer_size, colorRGB colorRGB, vec3 normals[3], std::vector<vec3*> light_collection, sr::vec3 cam_pos);
+	void Raster_colorRGBAndNormalInterpolated(std::function<void(sr::ivec2, sr::colorRGB)> setpixel, ivec2 p[3], float depth[3], sr::internal_buffer_object *buffers, sr::ivec2 framebuffer_size, colorRGB colors[3], vec3 normals[3], std::vector<vec3*> light_collection, sr::vec3 cam_pos);
 	void Raster_TextureInterpolated(std::function<void(sr::ivec2, sr::colorRGB)> setpixel, sr::ivec2 p[3], float depth[3], sr::colorRGB color, sr::internal_buffer_object *buffers, sr::ivec2 framebuffer_size, sr::vec3 tex[3], sr::colorRGB *texture, sr::ivec2 texture_size);
-	void Raster_TextureAndNormalInterpolated(std::function<void(sr::ivec2, sr::colorRGB)> setpixel, sr::ivec2 p[3], float depth[3], sr::colorRGB color, sr::internal_buffer_object *buffers, sr::ivec2 framebuffer_size, sr::vec3 tex[3], sr::vec3 normals[3], sr::colorRGB *texture, sr::ivec2 texture_size, sr::vec3 light);
-	void Raster_FullyInterpolated(std::function<void(sr::ivec2, sr::colorRGB)> setpixel, sr::ivec2 p[3], float depth[3], sr::internal_buffer_object *buffers, sr::ivec2 framebuffer_size, sr::vec3 tex[3], sr::vec3 normals[3], sr::colorRGB colors[3], sr::colorRGB *texture, sr::ivec2 texture_size, sr::vec3 light);
+	void Raster_TextureAndNormalInterpolated(std::function<void(sr::ivec2, sr::colorRGB)> setpixel, sr::ivec2 p[3], float depth[3], sr::colorRGB color, sr::internal_buffer_object *buffers, sr::ivec2 framebuffer_size, sr::vec3 tex[3], sr::vec3 normals[3], sr::colorRGB *texture, sr::ivec2 texture_size, std::vector<vec3*> light_collection, sr::vec3 cam_pos);
+	void Raster_FullyInterpolated(std::function<void(sr::ivec2, sr::colorRGB)> setpixel, sr::ivec2 p[3], float depth[3], sr::internal_buffer_object *buffers, sr::ivec2 framebuffer_size, sr::vec3 tex[3], sr::vec3 normals[3], sr::colorRGB colors[3], sr::colorRGB *texture, sr::ivec2 texture_size, std::vector<vec3*> light_collection, sr::vec3 cam_pos);
 
 //-----------------------------------------------------------------------------
 // [SECTION] Matrix
@@ -159,5 +159,5 @@ namespace sr{
 // [SECTION] Rendering
 //-----------------------------------------------------------------------------
 
-	void Render(std::function<void(sr::ivec2, sr::colorRGB)> setpixel, std::vector<mesh*> mesh_collection, mat4x4 Projection_Matrix, player_t Camera, sr::internal_buffer_object *buffers, vec3 light, sr::ivec2 framebuffer_size, bool phong);
+	void Render(std::function<void(sr::ivec2, sr::colorRGB)> setpixel, std::vector<mesh*> mesh_collection, mat4x4 Projection_Matrix, player_t Camera, sr::internal_buffer_object *buffers, std::vector<vec3*> light_collection, sr::ivec2 framebuffer_size, bool phong);
 };

@@ -1,6 +1,10 @@
 #include "sr_core.hpp"
 #include <sstream>
 
+#define K_AMBIENT 0.13f
+#define K_DIFFUSE 0.65f
+#define K_SPECULAR 0.5f
+
 template <typename T> T CLAMP(const T& value, const T& low, const T& high) 
 {
   return value < low ? low : (value > high ? high : value); 
@@ -30,6 +34,7 @@ sr::internal_buffer_object::~internal_buffer_object()
 void sr::internal_buffer_object::update_frame(sr::ivec2 framebuffer_size){
     std::fill_n(depth_buffer, framebuffer_size.y*framebuffer_size.x, 0.0f);
 }
+
 void sr::internal_buffer_object::update_framebuffer_size(sr::ivec2 framebuffer_size){
     delete depth_buffer;
     delete scanline_buffer;
@@ -61,6 +66,41 @@ uint8_t sr::LZ(int x){
     return z;
 }
 
+sr::colorRGB sr::shadedColor(sr::colorRGB color, sr::vec3 &normal, std::vector<sr::vec3*> light_collection, sr::vec3 point, sr::vec3 &cam_pos){
+    sr::colorRGB light;
+    
+    sr::vec3 light_color = sr::vec3(
+        1.0f,
+        1.0f,
+        1.0f
+    );
+    sr::vec3 view_dir = Vector_Sub(cam_pos, point);
+    view_dir = Vector_Normalise(view_dir);
+
+    float diffuse = 0;
+    float specular = 0;
+
+    for(int i = 0; i < light_collection.size(); i++){
+        sr::vec3 light_dir = Vector_Sub(*light_collection[i], point);//dir to the light source
+        light_dir = Vector_Normalise(light_dir);
+        diffuse += K_DIFFUSE * std::max(Vector_DotProduct(normal, light_dir), 0.0f);
+        sr::vec3 invlight_dir = sr::vec3(0,0,0);
+        invlight_dir = Vector_Sub(invlight_dir, light_dir);
+        sr::vec3 spec_normal = Vector_Mul(normal, 2.0f * Vector_DotProduct(normal, invlight_dir));
+        sr::vec3 reflection = Vector_Sub(invlight_dir, spec_normal);
+        specular += K_SPECULAR * pow(std::max(Vector_DotProduct(view_dir, reflection), 0.0f), 32);
+
+    }
+
+
+    light = sr::colorRGB(
+        CLAMP((K_AMBIENT + diffuse + specular) * color.r * light_color.x, 0.0f, 255.0f),
+        CLAMP((K_AMBIENT + diffuse + specular) * color.g * light_color.y, 0.0f, 255.0f),
+        CLAMP((K_AMBIENT + diffuse + specular) * color.b * light_color.z, 0.0f, 255.0f)
+    );
+
+    return light;
+}
 
 float sr::degToRad(float ang)
 {
@@ -188,43 +228,6 @@ float sr::dist(sr::vec3 &p, sr::vec3 &plane_n, sr::vec3 &plane_p){
 //-----------------------------------------------------------------------------
 // [SECTION] Mesh loading
 //-----------------------------------------------------------------------------
-
-void sr::OrderVertexIndex(sr::vec3 p[4], int v[4]){
-
-    //triangle 1: p[0], p[1], p[2]
-
-    sr::vec3 line[3][2] = {
-        {p[1],p[2]},
-        {p[0],p[2]},
-        {p[0],p[1]}
-    };
-
-    int line_i[3][2] = {
-        {1,2},
-        {0,2},
-        {0,1}
-    };
-
-    for(int i = 0; i < 3; i++){
-        sr::vec3 a = Vector_Sub(line[i][1], line[i][0]);
-        sr::vec3 b = Vector_Sub(p[3], p[i]);
-        sr::vec3 c = Vector_Sub(p[i], line[i][0]);
-
-        sr::vec3 cross_bc = Vector_CrossProduct(b,c);
-        sr::vec3 cross_ab = Vector_CrossProduct(a,b);
-
-        float s = Vector_DotProduct(cross_bc,cross_ab) / Vector_DotProduct(cross_ab, cross_ab);
-
-        if (!(s >= 0.0 && s <= 1.0))
-        {
-            v[0] = line_i[i][0];
-            v[1] = i;
-            v[2] = line_i[i][1];
-            v[3] = 3;
-            return;
-        }
-    }
-}
 
 bool sr::mesh::LoadFile(std::string sFilename)
 {
@@ -1147,8 +1150,8 @@ void sr::Raster_colorRGBInterpolated(std::function<void(sr::ivec2, sr::colorRGB)
 
     Raster(p, depth, f, buffers, framebuffer_size);
 }
-void sr::Raster_NormalInterpolated(std::function<void(sr::ivec2, sr::colorRGB)> setpixel, sr::ivec2 p[3], float depth[3], sr::internal_buffer_object *buffers, sr::ivec2 framebuffer_size, sr::colorRGB color, sr::vec3 normals[3], sr::vec3 light){
-    std::function<void(sr::ivec2 pixel, float d, sr::vec3 barycentric_coords)> f = [&color, &setpixel, p, normals, &light](sr::ivec2 pixel, float d, sr::vec3 barycentric_coords)
+void sr::Raster_NormalInterpolated(std::function<void(sr::ivec2, sr::colorRGB)> setpixel, sr::ivec2 p[3], float depth[3], sr::internal_buffer_object *buffers, sr::ivec2 framebuffer_size, sr::colorRGB color, sr::vec3 normals[3], std::vector<sr::vec3*> light_collection, sr::vec3 cam_pos){
+    std::function<void(sr::ivec2 pixel, float d, sr::vec3 barycentric_coords)> f = [&color, &setpixel, p, normals, &light_collection, &cam_pos](sr::ivec2 pixel, float d, sr::vec3 barycentric_coords)
     {
         sr::vec3 normal = sr::vec3(
             normals[0].x * barycentric_coords.x + normals[1].x * barycentric_coords.y + normals[2].x * barycentric_coords.z,
@@ -1157,21 +1160,17 @@ void sr::Raster_NormalInterpolated(std::function<void(sr::ivec2, sr::colorRGB)> 
         );
 
         normal = Vector_Length(normal) != 0 ? Vector_Normalise(normal) : sr::vec3(0,0,0);
-        float light_dp = Vector_DotProduct(normal, light);
-        const uint8_t min_light_value = 5;
-        float light_value = (float)(((light_dp + 1)/2)*(255 - min_light_value) + min_light_value)/255;
-        sr::colorRGB shade = sr::colorRGB(
-            (uint8_t)((float)color.r * light_value),
-            (uint8_t)((float)color.g * light_value),
-            (uint8_t)((float)color.b * light_value)
-        );
-        setpixel(pixel, shade);
+        setpixel(pixel, shadedColor(color, normal, light_collection, sr::vec3(
+            p[0].x * barycentric_coords.x + p[1].x * barycentric_coords.y + p[2].x * barycentric_coords.z,
+            p[0].y * barycentric_coords.x + p[1].y * barycentric_coords.y + p[2].y * barycentric_coords.z,
+            d
+        ),cam_pos));
     };
 
     Raster(p, depth, f, buffers, framebuffer_size);
 }
-void sr::Raster_colorRGBAndNormalInterpolated(std::function<void(sr::ivec2, sr::colorRGB)> setpixel, sr::ivec2 p[3], float depth[3], sr::internal_buffer_object *buffers, sr::ivec2 framebuffer_size, sr::colorRGB colors[3], sr::vec3 normals[3], sr::vec3 light){
-    std::function<void(sr::ivec2 pixel, float d, sr::vec3 barycentric_coords)> f = [colors, &setpixel, p, normals, &light](sr::ivec2 pixel, float d, sr::vec3 barycentric_coords)
+void sr::Raster_colorRGBAndNormalInterpolated(std::function<void(sr::ivec2, sr::colorRGB)> setpixel, sr::ivec2 p[3], float depth[3], sr::internal_buffer_object *buffers, sr::ivec2 framebuffer_size, sr::colorRGB colors[3], sr::vec3 normals[3], std::vector<sr::vec3*> light_collection, sr::vec3 cam_pos){
+    std::function<void(sr::ivec2 pixel, float d, sr::vec3 barycentric_coords)> f = [colors, &setpixel, p, normals, &light_collection, &cam_pos](sr::ivec2 pixel, float d, sr::vec3 barycentric_coords)
     {
         sr::vec3 normal = sr::vec3(
             normals[0].x * barycentric_coords.x + normals[1].x * barycentric_coords.y + normals[2].x * barycentric_coords.z,
@@ -1185,15 +1184,11 @@ void sr::Raster_colorRGBAndNormalInterpolated(std::function<void(sr::ivec2, sr::
         );
 
         normal = Vector_Length(normal) != 0 ? Vector_Normalise(normal) : sr::vec3(0,0,0);
-        float light_dp = Vector_DotProduct(normal, light);
-        const uint8_t min_light_value = 5;
-        float light_value = (float)(((light_dp + 1)/2)*(255 - min_light_value) + min_light_value)/255;
-        sr::colorRGB shade = sr::colorRGB(
-            (uint8_t)((float)color.r * light_value),
-            (uint8_t)((float)color.g * light_value),
-            (uint8_t)((float)color.b * light_value)
-        );
-        setpixel(pixel, shade);
+        setpixel(pixel, shadedColor(color, normal, light_collection, sr::vec3(
+            p[0].x * barycentric_coords.x + p[1].x * barycentric_coords.y + p[2].x * barycentric_coords.z,
+            p[0].y * barycentric_coords.x + p[1].y * barycentric_coords.y + p[2].y * barycentric_coords.z,
+            d
+        ), cam_pos));
     };
 
     Raster(p, depth, f, buffers, framebuffer_size);
@@ -1220,9 +1215,9 @@ void sr::Raster_TextureInterpolated(std::function<void(sr::ivec2, sr::colorRGB)>
         );
 
         color = sr::colorRGB(
-            texture_color.r,
-            texture_color.g,
-            texture_color.b
+            (float)texture_color.r * 0.5f + (float)color.r * 0.5f,
+            (float)texture_color.g * 0.5f + (float)color.g * 0.5f,
+            (float)texture_color.b * 0.5f + (float)color.b * 0.5f
         );
 
         setpixel(pixel, color);
@@ -1231,8 +1226,8 @@ void sr::Raster_TextureInterpolated(std::function<void(sr::ivec2, sr::colorRGB)>
     Raster(p, depth, f, buffers, framebuffer_size);
 }
 
-void sr::Raster_TextureAndNormalInterpolated(std::function<void(sr::ivec2, sr::colorRGB)> setpixel, sr::ivec2 p[3], float depth[3], sr::colorRGB color, sr::internal_buffer_object *buffers, sr::ivec2 framebuffer_size, sr::vec3 tex[3], sr::vec3 normals[3], sr::colorRGB *texture, sr::ivec2 texture_size, sr::vec3 light){
-    std::function<void(sr::ivec2 pixel, float d, sr::vec3 barycentric_coords)> f = [&setpixel, tex, texture, &color, &texture_size, normals, &light](sr::ivec2 pixel, float d, sr::vec3 barycentric_coords)
+void sr::Raster_TextureAndNormalInterpolated(std::function<void(sr::ivec2, sr::colorRGB)> setpixel, sr::ivec2 p[3], float depth[3], sr::colorRGB color, sr::internal_buffer_object *buffers, sr::ivec2 framebuffer_size, sr::vec3 tex[3], sr::vec3 normals[3], sr::colorRGB *texture, sr::ivec2 texture_size, std::vector<sr::vec3*> light_collection, sr::vec3 cam_pos){
+    std::function<void(sr::ivec2 pixel, float d, sr::vec3 barycentric_coords)> f = [&setpixel, tex, texture, p, &color, &texture_size, normals, &light_collection, &cam_pos](sr::ivec2 pixel, float d, sr::vec3 barycentric_coords)
     {
         sr::vec3 tex_c = sr::vec3(
             tex[0].x * barycentric_coords.x + tex[1].x * barycentric_coords.y + tex[2].x * barycentric_coords.z,
@@ -1251,7 +1246,11 @@ void sr::Raster_TextureAndNormalInterpolated(std::function<void(sr::ivec2, sr::c
             texture[texture_coords.y * texture_size.x + texture_coords.x].b
         );
 
-        color = texture_color;
+        color = sr::colorRGB(
+            (float)texture_color.r * 0.5f + (float)color.r * 0.5f,
+            (float)texture_color.g * 0.5f + (float)color.g * 0.5f,
+            (float)texture_color.b * 0.5f + (float)color.b * 0.5f
+        );
 
 
         sr::vec3 normal = sr::vec3(
@@ -1261,22 +1260,18 @@ void sr::Raster_TextureAndNormalInterpolated(std::function<void(sr::ivec2, sr::c
         );
 
         normal = Vector_Length(normal) != 0 ? Vector_Normalise(normal) : sr::vec3(0,0,0);
-        float light_dp = Vector_DotProduct(normal, light);
-        const uint8_t min_light_value = 5;
-        float light_value = (float)(((light_dp + 1)/2)*(255 - min_light_value) + min_light_value)/255;
-        sr::colorRGB shade = sr::colorRGB(
-            (uint8_t)((float)color.r * light_value),
-            (uint8_t)((float)color.g * light_value),
-            (uint8_t)((float)color.b * light_value)
-        );
-        setpixel(pixel, shade);
+        setpixel(pixel, shadedColor(color, normal, light_collection, sr::vec3(
+            p[0].x * barycentric_coords.x + p[1].x * barycentric_coords.y + p[2].x * barycentric_coords.z,
+            p[0].y * barycentric_coords.x + p[1].y * barycentric_coords.y + p[2].y * barycentric_coords.z,
+            d
+        ), cam_pos));
     };
 
     Raster(p, depth, f, buffers, framebuffer_size);
 }
 
-void sr::Raster_FullyInterpolated(std::function<void(sr::ivec2, sr::colorRGB)> setpixel, sr::ivec2 p[3], float depth[3], sr::internal_buffer_object *buffers, sr::ivec2 framebuffer_size, sr::vec3 tex[3], sr::vec3 normals[3], sr::colorRGB colors[3], sr::colorRGB *texture, sr::ivec2 texture_size, sr::vec3 light){
-    std::function<void(sr::ivec2 pixel, float d, sr::vec3 barycentric_coords)> f = [&setpixel, tex, texture, colors, &texture_size, normals, &light](sr::ivec2 pixel, float d, sr::vec3 barycentric_coords)
+void sr::Raster_FullyInterpolated(std::function<void(sr::ivec2, sr::colorRGB)> setpixel, sr::ivec2 p[3], float depth[3], sr::internal_buffer_object *buffers, sr::ivec2 framebuffer_size, sr::vec3 tex[3], sr::vec3 normals[3], sr::colorRGB colors[3], sr::colorRGB *texture, sr::ivec2 texture_size, std::vector<sr::vec3*> light_collection, sr::vec3 cam_pos){
+    std::function<void(sr::ivec2 pixel, float d, sr::vec3 barycentric_coords)> f = [&setpixel, p, tex, texture, colors, &texture_size, normals, &light_collection, &cam_pos](sr::ivec2 pixel, float d, sr::vec3 barycentric_coords)
     {
         sr::colorRGB color = sr::colorRGB(
             (float)colors[0].r * barycentric_coords.x + (float)colors[1].r * barycentric_coords.y + (float)colors[2].r * barycentric_coords.z,
@@ -1301,7 +1296,11 @@ void sr::Raster_FullyInterpolated(std::function<void(sr::ivec2, sr::colorRGB)> s
             texture[texture_coords.y * texture_size.x + texture_coords.x].b
         );
 
-        color = texture_color;
+        color = sr::colorRGB(
+            (float)texture_color.r * 0.5f + (float)color.r * 0.5f,
+            (float)texture_color.g * 0.5f + (float)color.g * 0.5f,
+            (float)texture_color.b * 0.5f + (float)color.b * 0.5f
+        );
 
 
         sr::vec3 normal = sr::vec3(
@@ -1311,15 +1310,11 @@ void sr::Raster_FullyInterpolated(std::function<void(sr::ivec2, sr::colorRGB)> s
         );
 
         normal = Vector_Length(normal) != 0 ? Vector_Normalise(normal) : sr::vec3(0,0,0);
-        float light_dp = Vector_DotProduct(normal, light);
-        const uint8_t min_light_value = 5;
-        float light_value = (float)(((light_dp + 1)/2)*(255 - min_light_value) + min_light_value)/255;
-        sr::colorRGB shade = sr::colorRGB(
-            (uint8_t)((float)color.r * light_value),
-            (uint8_t)((float)color.g * light_value),
-            (uint8_t)((float)color.b * light_value)
-        );
-        setpixel(pixel, shade);
+        setpixel(pixel, shadedColor(color, normal, light_collection, sr::vec3(
+            p[0].x * barycentric_coords.x + p[1].x * barycentric_coords.y + p[2].x * barycentric_coords.z,
+            p[0].y * barycentric_coords.x + p[1].y * barycentric_coords.y + p[2].y * barycentric_coords.z,
+            d
+        ), cam_pos));
     };
 
     Raster(p, depth, f, buffers, framebuffer_size);
@@ -1331,12 +1326,9 @@ void sr::Raster_FullyInterpolated(std::function<void(sr::ivec2, sr::colorRGB)> s
 //-----------------------------------------------------------------------------
 
 
-void sr::Render(std::function<void(sr::ivec2, sr::colorRGB)> setpixel, std::vector<sr::mesh*> mesh_collection, sr::mat4x4 Projection_Matrix, sr::player_t Camera, sr::internal_buffer_object *buffers, sr::vec3 light, sr::ivec2 framebuffer_size, bool phong){
+void sr::Render(std::function<void(sr::ivec2, sr::colorRGB)> setpixel, std::vector<sr::mesh*> mesh_collection, sr::mat4x4 Projection_Matrix, sr::player_t Camera, sr::internal_buffer_object *buffers, std::vector<sr::vec3*> light_collection, sr::ivec2 framebuffer_size, bool phong){
 
     buffers->update_frame(framebuffer_size);
-
-    float l_length = sqrt(light.x*light.x + light.y*light.y + light.z*light.z);
-    light.x /= l_length; light.y /= l_length; light.z /= l_length;
 
     sr::vec3 vLookDir;
     vLookDir.z = 1;
@@ -1406,22 +1398,12 @@ void sr::Render(std::function<void(sr::ivec2, sr::colorRGB)> setpixel, std::vect
                 line1 = Vector_Sub(transformation.p[1], transformation.p[0]);
                 line2 = Vector_Sub(transformation.p[2], transformation.p[0]);
 
-                normal.x = line1.y * line2.z - line1.z * line2.y;
-                normal.y = line1.z * line2.x - line1.x * line2.z;
-                normal.z = line1.x * line2.y - line1.y * line2.x;
+                normal = Vector_CrossProduct(line1, line2);
 
-                float l = sqrt(normal.x*normal.x + normal.y*normal.y + normal.z*normal.z);
-                normal.x /= l; normal.y /= l; normal.z /= l;
+                normal = Vector_Normalise(normal);
 
                 if(normal.x * (transformation.p[0].x - Camera.x) + normal.y * (transformation.p[0].y - Camera.y) + normal.z * (transformation.p[0].z - Camera.z) < 0)
                 {
-
-                    float light_dp = normal.x*light.x+normal.y*light.y+normal.z*light.z;
-
-                    int shade = (int)(light_dp*250 + 5);
-                    if(shade < 5 || shade > 255){
-                        shade = 5;
-                    }
 
                     for(int j = 0; j < 3; j++){
                         view.p[j] = Vector_MultiplyMatrix(transformation.p[j], matView);
@@ -1463,13 +1445,6 @@ void sr::Render(std::function<void(sr::ivec2, sr::colorRGB)> setpixel, std::vect
 
                         projection.c = clipped[n].c;
 
-                        projection.p[0].x *= 1;
-                        projection.p[1].x *= 1;
-                        projection.p[2].x *= 1;
-                        projection.p[0].y *= 1;
-                        projection.p[1].y *= 1;
-                        projection.p[2].y *= 1;
-
                         projection.p[0].x += 1; projection.p[0].y += 1;
                         projection.p[1].x += 1; projection.p[1].y += 1;
                         projection.p[2].x += 1; projection.p[2].y += 1;
@@ -1481,8 +1456,6 @@ void sr::Render(std::function<void(sr::ivec2, sr::colorRGB)> setpixel, std::vect
                         projection.p[0].x += (framebuffer_size.x-framebuffer_size.y)/2;
                         projection.p[1].x += (framebuffer_size.x-framebuffer_size.y)/2;
                         projection.p[2].x += (framebuffer_size.x-framebuffer_size.y)/2;
-
-                        projection.c = (sr::colorRGB){shade, shade, shade};
 
 
 
@@ -1530,12 +1503,21 @@ void sr::Render(std::function<void(sr::ivec2, sr::colorRGB)> setpixel, std::vect
                                 t->t[2].z
                             };
 
-                            sr::colorRGB color = sr::colorRGB( LZ(t->c.r + mesh.color.r - 255), LZ(t->c.g + mesh.color.g - 255), LZ(t->c.b + mesh.color.b - 255));
+                            sr::vec3 cam_pos = sr::vec3(
+                                Camera.x,
+                                Camera.y,
+                                Camera.z
+                            );
+
+                            sr::vec3 point = Vector_Add(t->p[0], t->p[1]);
+                            point = Vector_Add(t->p[2], t->p[1]);
+                            point = Vector_Div(point, 3);
+                            
 
                             if(mesh.texture == NULL){
-                                Raster_NonInterpolated(setpixel, p, d, buffers, framebuffer_size, color);
+                                Raster_NonInterpolated(setpixel, p, d, buffers, framebuffer_size, shadedColor(mesh.color, normal, light_collection, point, cam_pos));
                             }else{
-                                Raster_TextureInterpolated(setpixel, p, d, color, buffers, framebuffer_size, t->t, mesh.texture, mesh.texture_size);
+                                Raster_TextureInterpolated(setpixel, p, d, shadedColor(mesh.color, normal, light_collection, point, cam_pos), buffers, framebuffer_size, t->t, mesh.texture, mesh.texture_size);
                             }
                         }
                     }
@@ -1554,12 +1536,10 @@ void sr::Render(std::function<void(sr::ivec2, sr::colorRGB)> setpixel, std::vect
                 line1 = Vector_Sub(transformation.p[1], transformation.p[0]);
                 line2 = Vector_Sub(transformation.p[2], transformation.p[0]);
 
-                normal.x = line1.y * line2.z - line1.z * line2.y;
-                normal.y = line1.z * line2.x - line1.x * line2.z;
-                normal.z = line1.x * line2.y - line1.y * line2.x;
+                normal = Vector_CrossProduct(line1, line2);
 
-                float l = sqrt(normal.x*normal.x + normal.y*normal.y + normal.z*normal.z);
-                normal.x /= l; normal.y /= l; normal.z /= l;
+                normal = Vector_Normalise(normal);
+
 
                 if(normal.x * (transformation.p[0].x - Camera.x) + normal.y * (transformation.p[0].y - Camera.y) + normal.z * (transformation.p[0].z - Camera.z) < 0)
                 {
@@ -1604,13 +1584,6 @@ void sr::Render(std::function<void(sr::ivec2, sr::colorRGB)> setpixel, std::vect
                         projection.p[0] = Vector_Div(projection.p[0], projection.p[0].w);
                         projection.p[1] = Vector_Div(projection.p[1], projection.p[1].w);
                         projection.p[2] = Vector_Div(projection.p[2], projection.p[2].w);
-
-                        projection.p[0].x *= 1;
-                        projection.p[1].x *= 1;
-                        projection.p[2].x *= 1;
-                        projection.p[0].y *= 1;
-                        projection.p[1].y *= 1;
-                        projection.p[2].y *= 1;
 
                         projection.p[0].x += 1; projection.p[0].y += 1;
                         projection.p[1].x += 1; projection.p[1].y += 1;
@@ -1672,14 +1645,20 @@ void sr::Render(std::function<void(sr::ivec2, sr::colorRGB)> setpixel, std::vect
                                 t->t[2].z
                             };
 
+                            sr::vec3 cam_pos = sr::vec3(
+                                Camera.x,
+                                Camera.y,
+                                Camera.z
+                            );
+
                             t->n[0] = Vector_Length(t->p[0]) != 0 ? Vector_Normalise(t->n[0]) : sr::vec3(0,0,0);
                             t->n[1] = Vector_Length(t->p[1]) != 0 ? Vector_Normalise(t->n[1]) : sr::vec3(0,0,0);
                             t->n[2] = Vector_Length(t->p[2]) != 0 ? Vector_Normalise(t->n[2]) : sr::vec3(0,0,0);
 
                             if(mesh.texture == NULL){
-                                Raster_NormalInterpolated(setpixel, p, d, buffers, framebuffer_size, mesh.color, t->n, light);
+                                Raster_NormalInterpolated(setpixel, p, d, buffers, framebuffer_size, mesh.color, t->n, light_collection, cam_pos);
                             }else{
-                                Raster_TextureAndNormalInterpolated(setpixel, p, d, mesh.color, buffers, framebuffer_size, t->t, t->n, mesh.texture, mesh.texture_size, light);
+                                Raster_TextureAndNormalInterpolated(setpixel, p, d, mesh.color, buffers, framebuffer_size, t->t, t->n, mesh.texture, mesh.texture_size, light_collection, cam_pos);
                             }
                         }
                     }
