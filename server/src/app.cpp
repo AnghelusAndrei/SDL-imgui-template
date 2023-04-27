@@ -76,25 +76,18 @@ bool App::Frame(){
     ImGui::NewFrame();
 
     server->Listen();
+    Log log = server->GetLog();
+
+    server_package s_package;
+
     {
         ImVec2 window_size = GetWindowSize();
-        ImGui::SetNextWindowPos(ImVec2(0,0));
-        ImGui::SetNextWindowSize(window_size);
+        //ImGui::SetNextWindowPos(ImVec2(0,0));
+        //ImGui::SetNextWindowSize(window_size);
 
         ImGui::Begin("Server");  
 
         ImGui::Spacing();
-
-        if(!server->debug_error){
-            ImGui::Text("debug:"); ImGui::SameLine(); 
-            if(server->debug_init){
-                ImGui::Text(server->debug);
-            }else{
-                ImGui::Text("None");
-            }
-        }else{
-            ImGui::Text("error:"); ImGui::SameLine(); ImGui::Text(server->debug);
-        }
 
 
         ImGui::SeparatorText("Server data");
@@ -104,30 +97,40 @@ bool App::Frame(){
             parts[i] = ((uint8_t*)&server->ip.host)[3-i];
         ImGui::Text("The server is ran on port %i and local ip %i.%i.%i.%i", server->port, (int)parts[3], (int)parts[2], (int)parts[1], (int)parts[0]); 
         ImGui::Text("connected clients: %i", server->clients.size());
-        ImGui::Text("ready sockets: %i", server->num_ready);
-        ImGui::Text("sizeof c_package: %i", server->c_package_size);
-        ImGui::Text("sizeof s_package: %i", server->s_package_size);
 
         ImGui::SeparatorText("Clients");
 
         ImGui::BeginChild("clients", ImVec2(0, 60), true);
+
+        bool updates = false;
         for (auto client : server->clients){
+            std::pair<client_package*, bool> c_package = server->GetPackage(client.first);
+
+            if(c_package.second){
+                std::strcpy(s_package.text, c_package.first->text);
+                updates = true;
+            }
+
             for (int i=0; i<4 ;++i)
                 parts[i] = ((uint8_t*)&client.second.host)[3-i];
+
             ImGui::BulletText("Client id: host: %i.%i.%i.%i, port: %i. properites: name:", (int)parts[3], (int)parts[2], (int)parts[1], (int)parts[0], client.second.port);
             ImGui::SameLine();
-            ImGui::Text(client.second.package.name);
+            ImGui::Text(c_package.first->name);
         }
-        ImGui::EndChild();
-        
-        ImGui::BeginChild("text", ImVec2(0, 0), true);
-        for(auto text : server->s_package.text){
-            ImGui::Text(text);
+        s_package.num_users = server->clients.size();
+        if(updates){
+            for (auto client : server->clients){
+                server->SendPackage(client.first, &s_package);
+            }
         }
+
         ImGui::EndChild();
 
         ImGui::End();
     }
+
+    log.Draw("log");
     
 
     // Rendering

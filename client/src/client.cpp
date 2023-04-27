@@ -2,7 +2,7 @@
 
 
 void DebugError(thread_data *data, char *error){
-    data->WaitForMutex(data->debug_mutex);
+    SDL_mutexP(data->debug_mutex);
     data->debug->debug = error;
     data->debug->debug_init = true;
     data->debug->debug_error = true;
@@ -10,7 +10,7 @@ void DebugError(thread_data *data, char *error){
 }
 
 void DebugMessage(thread_data *data, char *message){
-    data->WaitForMutex(data->debug_mutex);
+    SDL_mutexP(data->debug_mutex);
     data->debug->debug = message;
     data->debug->debug_init = true;
     data->debug->debug_error = false;
@@ -20,19 +20,10 @@ void DebugMessage(thread_data *data, char *message){
 static int c_thread(void *data){
     thread_data *threadData = static_cast<thread_data*>(data);
 
-    auto check_if_thread_active = [&]() 
-    { 
-        threadData->WaitForMutex(threadData->client_active_mutex);
-        bool return_val = threadData->client_active;
-        SDL_mutexV(threadData->client_active_mutex);
-        return return_val;
-    };
-
-
-    while (check_if_thread_active())
+    while (threadData->client_active)
     {
         if(!threadData->c_package_bool){
-            threadData->WaitForMutex(threadData->c_package_mutex);
+            SDL_mutexP(threadData->c_package_mutex);
             char buffer[threadData->c_package_size] = "";
             memcpy(buffer, threadData->c_package, sizeof(*threadData->c_package));
             if (SDLNet_TCP_Send(threadData->socket, (void *)buffer, threadData->c_package_size) < threadData->c_package_size) {
@@ -49,20 +40,11 @@ static int c_thread(void *data){
 static int s_thread(void *data){
     thread_data *threadData = static_cast<thread_data*>(data);
 
-    auto check_if_thread_active = [&]() 
-    { 
-        threadData->WaitForMutex(threadData->client_active_mutex);
-        bool return_val = threadData->client_active;
-        SDL_mutexV(threadData->client_active_mutex);
-        return return_val;
-    };
-
-
-    while (check_if_thread_active())
+    while (threadData->client_active)
     {
 
         if(!threadData->s_package_bool){
-            threadData->WaitForMutex(threadData->s_package_mutex);
+            SDL_mutexP(threadData->s_package_mutex);
             char buffer[threadData->s_package_size] = "";
             if (SDLNet_TCP_Recv(threadData->socket, buffer, threadData->s_package_size)){
                 memcpy(threadData->s_package, buffer, sizeof(buffer));
@@ -106,15 +88,15 @@ bool Client::Connect(uint16_t port, char *ip){
 
     connected = true;
 
-    data->WaitForMutex(data->client_active_mutex);
+    SDL_mutexP(data->client_active_mutex);
     data->client_active = true;
     SDL_mutexV(data->client_active_mutex);
     return 1;
 }
 
 bool Client::Disconnect(){
-    if(data->client_active_mutex){
-        data->WaitForMutex(data->client_active_mutex);
+    if(data->client_active){
+        SDL_mutexP(data->client_active_mutex);
         data->client_active = false;
         SDL_mutexV(data->client_active_mutex);
 
@@ -155,7 +137,7 @@ bool Client::InitC_Thread(){
 server_package *Client::s_package(){
 
     if(data->s_package_bool){
-        data->WaitForMutex(data->s_package_mutex);
+        SDL_mutexP(data->s_package_mutex);
         memcpy(&s_data, data->s_package, sizeof(*data->s_package));
         data->s_package_bool = false;
         SDL_mutexV(data->s_package_mutex);
@@ -166,7 +148,7 @@ server_package *Client::s_package(){
 }
 
 void Client::Send(client_package *cpy){
-    data->WaitForMutex(data->c_package_mutex);
+    SDL_mutexP(data->c_package_mutex);
     memcpy(data->c_package, cpy, sizeof(*cpy));
     data->c_package_bool = false;
     SDL_mutexV(data->c_package_mutex);
@@ -183,7 +165,7 @@ debug_data Client::GetDebug(){
 IPaddress Client::GetIP(){
     IPaddress cpy;
 
-    data->WaitForMutex(data->ip_mutex);
+    SDL_mutexP(data->ip_mutex);
     cpy.host = data->server_address.host;
     cpy.port = data->server_address.port;
     SDL_mutexV(data->ip_mutex);

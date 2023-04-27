@@ -33,7 +33,7 @@ public:
     it is turned false when data is sent to the server
     and true when new data is waiting to be sent
     */
-    bool c_package_bool = false;
+    bool c_package_bool = true;
 
     /*
     this is the data recieved from the server
@@ -64,9 +64,6 @@ public:
     //package size
     size_t s_package_size;
     size_t c_package_size;
-
-    //this function is blocking
-    bool WaitForMutex(SDL_mutex *mutex);
 
     uint64_t Hash_Address(uint32_t host, uint16_t port);
     TCPsocket socket;

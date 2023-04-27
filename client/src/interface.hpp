@@ -32,13 +32,7 @@ class Interface{
     char input_name[16] = "";
     char input_text[64] = "";
 
-    uint32_t ms_f1;
-    uint32_t ms_f2;
-
-    sr::internal_buffer_object *buffers;
-    sr::mesh Cube;
-    sr::player_t Camera = {0,0,0,0,0};
-    sr::vec3 light;
+    char chat[10][64] = {""};
 
     ImVec2 GetWindowSize();
 };

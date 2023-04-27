@@ -5,7 +5,7 @@
 #include "imgui/internal/imgui_impl_sdl2.h"
 #include "imgui/internal/imgui_impl_sdlrenderer.h"
 #include "SDL.h"
-#include "server.hpp"
+#include "threaded_server.hpp"
 
 
 class App{

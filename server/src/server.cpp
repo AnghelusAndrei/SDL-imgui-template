@@ -1,5 +1,6 @@
-#include "server.hpp"
+/*#include "server.hpp"
 #include "SDL_net.h"
+#define MAX_SOCKETS 30
 
 Server::Server(const uint16_t &port_) : port(port_), s_package_size(sizeof(server_package)), c_package_size(sizeof(client_package)){
     if (SDLNet_Init() < 0) { 
@@ -184,4 +185,4 @@ bool Server::Listen(){
     
     
     return true;
-}
+}*/

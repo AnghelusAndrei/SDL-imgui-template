@@ -21,8 +21,3 @@ thread_data::~thread_data(){
     SDL_DestroyMutex(debug_mutex);
     SDL_DestroyMutex(ip_mutex);
 }
-
-bool thread_data::WaitForMutex(SDL_mutex *mutex){
-    while(SDL_mutexP(mutex) == -1){}
-    return true;
-}

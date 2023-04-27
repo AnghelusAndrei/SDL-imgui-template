@@ -1,7 +1,5 @@
 #include <bits/stdc++.h>
 
-#define MAX_SOCKETS 30
-
 //--packages
 
 typedef struct{
@@ -12,7 +10,7 @@ typedef struct{
 
 typedef struct{
     uint8_t num_users = 0;
-    char text[10][64] = {"","","",""};
+    char text[64] = "";
 } server_package;
 
 //--
