@@ -13,6 +13,7 @@ SET(SDL2_SEARCH_PATHS
     "C:/Program Files (x86)"
     "C:/Program Files"
     "C:"
+	"C:/Program Files (x86)/SDL2"
 )
 
 FIND_PATH(SDL2_INCLUDE_DIR SDL.h

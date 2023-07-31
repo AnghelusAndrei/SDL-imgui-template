@@ -45,7 +45,7 @@ int main(int, char**)
 #endif
 
     SDL_WindowFlags window_flags = (SDL_WindowFlags)(SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
-    SDL_Window* window = SDL_CreateWindow("Dear ImGui SDL2+SDL_Renderer example", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1280, 720, window_flags);
+    SDL_Window* window = SDL_CreateWindow("Dear ImGui SDL2+SDL_Renderer example", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 800, 600, window_flags);
     SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_PRESENTVSYNC | SDL_RENDERER_ACCELERATED);
     if (renderer == NULL)
     {
@@ -83,8 +83,8 @@ int main(int, char**)
     ImVec2 window_size = GetWindowSize(window);
     buffers = new sr::internal_buffer_object(sr::ivec2((int)window_size.x, (int)window_size.y));
 
-    Cube.LoadFile("./assets/teapot.obj");
-    /*SDL_Surface *obj_surface = IMG_Load("./assets/texture.jpg");
+    Cube.LoadFile("assets/cow.obj");
+    /*SDL_Surface *obj_surface = IMG_Load("./assets/capsule.jpg");
 
     Cube.texture = new sr::colorRGB[obj_surface->h * obj_surface->w];
     Cube.texture_size = sr::ivec2(obj_surface->w, obj_surface->h);
@@ -96,8 +96,8 @@ int main(int, char**)
                 ((char*)obj_surface->pixels)[obj_surface->format->BytesPerPixel * (y * obj_surface -> w + x) + 0]
             );
         }
-    }*/
-
+    }
+*/
     std::vector<sr::mesh*> mesh_collection;
     std::vector<sr::vec3*> light_collection;
 
@@ -110,13 +110,13 @@ int main(int, char**)
 
     Cube.position.x = 3;
     Cube.position.y = 1;
-    Cube.position.z = 5.5;
+    Cube.position.z = 10;
 
     Cube.size.x = 1;
     Cube.size.y = 1;
     Cube.size.z = 1;
 
-    Cube.color = {255, 50, 50};
+    Cube.color = {255, 255, 255};
 
 
     SDL_Texture* texture_buffer = SDL_CreateTexture(renderer, 
