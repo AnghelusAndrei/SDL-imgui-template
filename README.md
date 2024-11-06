@@ -3,6 +3,9 @@
 
 ![README](https://user-images.githubusercontent.com/73694888/228629424-d5397c8a-3faa-4ca0-a1a3-2b9d5b0b3df5.png)
 
+# Repository:
+In this repository(on the other branches) you can find my other experiments and examples of what you can do with this template. Such as a simple chat application and a 3D software renderer.
+
 ### requires:
 * SDL2 devel pack
 
